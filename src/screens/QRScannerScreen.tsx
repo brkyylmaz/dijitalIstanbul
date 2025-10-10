@@ -51,20 +51,6 @@ function QRScannerScreen() {
     }, [])
   );
 
-  const extractMosqueId = (url: string): string | undefined => {
-    try {
-      const match = url.match(/\/u\/([^/?#]+)/i);
-      if (match && match[1]) {
-        return match[1];
-      }
-
-      const cleaned = url.split('?')[0].replace(/\/$/, '');
-      const segments = cleaned.split('/').filter(Boolean);
-      return segments.pop();
-    } catch (error) {
-      return undefined;
-    }
-  };
 
   const handleBarCodeScanned = async (code: string) => {
     if (isProcessing) {
@@ -76,27 +62,42 @@ function QRScannerScreen() {
     try {
       const sourceUrl = code.trim();
       const encodedUrl = encodeURIComponent(sourceUrl);
-      const response = await fetch(
-        `https://cuzdan.basaranamortisor.com/api/resolve_qr?url=${encodedUrl}`,
+      
+      // 1. ADIM: Önce resolve-qr'den ID'yi al (düz metin olarak geliyor)
+      const resolveResponse = await fetch(
+        `https://cuzdan.basaranamortisor.com/api/resolve-qr?url=${encodedUrl}`,
       );
 
-      if (!response.ok) {
-        throw new Error('Data not found');
+      if (!resolveResponse.ok) {
+        throw new Error('QR kodu çözümlenemedi');
       }
 
-      const data = await response.json();
-      const idFromUrl = extractMosqueId(sourceUrl);
-      const idFromData = (data as { id?: string } | null)?.id;
+      const mosqueId = await resolveResponse.text(); // ID düz metin olarak geliyor
+      
+      if (!mosqueId || mosqueId.trim() === '') {
+        throw new Error('Geçersiz QR kodu');
+      }
+
+      // 2. ADIM: Bu ID ile page-data'dan detaylı veriyi al
+      const dataResponse = await fetch(
+        `https://cuzdan.basaranamortisor.com/api/page-data?id=${mosqueId.trim()}`,
+      );
+
+      if (!dataResponse.ok) {
+        throw new Error('Cami detayları bulunamadı');
+      }
+
+      const mosqueData = await dataResponse.json();
 
       navigation.navigate('MosqueDetail', {
-        mosqueId: idFromUrl ?? idFromData,
+        mosqueId: mosqueId.trim(),
         sourceUrl,
-        mosqueData: data,
+        mosqueData,
       });
     } catch (error) {
       Alert.alert(
-        'Scan Error',
-        error instanceof Error ? error.message : 'Unexpected error',
+        'Tarama Hatası',
+        error instanceof Error ? error.message : 'Beklenmeyen hata',
       );
       setTimeout(() => setIsProcessing(false), 2000);
     }

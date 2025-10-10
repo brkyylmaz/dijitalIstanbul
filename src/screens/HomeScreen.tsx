@@ -1,18 +1,51 @@
 import React from 'react';
 import { StyleSheet, View, useWindowDimensions, Text, ScrollView, Pressable, Image, Linking } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
+import { CompositeNavigationProp } from '@react-navigation/native';
+import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import SearchInput, { SEARCH_INPUT_HEIGHT } from '../components/searchInput';
 import { getHeaderExtension, HORIZONTAL_SCREEN_PADDING } from '../theme/layout';
 import Slider from '../components/slider';
 import HomeBox from '../components/homeBoxes';
+import { RootStackParamList } from '../navigation/AppNavigator';
+
+type TabParamList = {
+  Home: undefined;
+  QR: undefined;
+  CulturalAssets: { filter?: string };
+};
+
+type NavigationProp = CompositeNavigationProp<
+  BottomTabNavigationProp<TabParamList>,
+  NativeStackNavigationProp<RootStackParamList>
+>;
 
 const HomeScreen = () => {
+  const navigation = useNavigation<NavigationProp>();
   const [searchText, setSearchText] = React.useState('');
   const { height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const headerBaseHeight = getHeaderExtension(height);
   const headerTotalHeight = headerBaseHeight + insets.top*1.5;
   const searchOverlapOffset = headerBaseHeight - SEARCH_INPUT_HEIGHT*1.1;
+
+  const handleCamilerPress = () => {
+    navigation.navigate('CulturalAssets', { filter: 'mosque' });
+  };
+
+  const handleTurbelerPress = () => {
+    navigation.navigate('CulturalAssets', { filter: 'turbe' });
+  };
+
+  const handleKiliselerPress = () => {
+    navigation.navigate('CulturalAssets', { filter: 'church' });
+  };
+
+  const handleOkullarPress = () => {
+    navigation.navigate('CulturalAssets', { filter: 'school' });
+  };
 
   const handleValiPress = () => {
     Linking.openURL('http://www.istanbul.gov.tr/');
@@ -51,8 +84,8 @@ const HomeScreen = () => {
             <HomeBox
               icon={require('../assets/images/camiiBlack.png')}
               title="Camiler"
-              height={145}
-              onPress={() => console.log('Camii')}
+              height={125}
+              onPress={handleCamilerPress}
             />
           </View>
           <View style={styles.boxWrapper}>
@@ -60,7 +93,25 @@ const HomeScreen = () => {
               icon={require('../assets/images/turbe.png')}
               title="Türbeler"
               height={145}
-              onPress={() => console.log('Türbe')}
+              onPress={handleTurbelerPress}
+            />
+          </View>
+        </View>
+        <View style={styles.boxesRow}>
+          <View style={styles.boxWrapper}>
+            <HomeBox
+              icon={require('../assets/images/camiiBlack.png')}
+              title="Kiliseler"
+              height={160}
+              onPress={handleKiliselerPress}
+            />
+          </View>
+          <View style={styles.boxWrapper}>
+            <HomeBox
+              icon={require('../assets/images/turbe.png')}
+              title="Okullar"
+              height={150}
+              onPress={handleOkullarPress}
             />
           </View>
         </View>
@@ -147,7 +198,7 @@ const styles = StyleSheet.create({
   boxesRow: {
     flexDirection: 'row',
     gap: 12,
-    marginTop: 10,
+    marginTop: 12,
   },
   boxWrapper: {
     flex: 1,
@@ -155,7 +206,7 @@ const styles = StyleSheet.create({
   sponsorsRow: {
     flexDirection: 'row',
     gap: 12,
-    marginTop: 20,
+    marginTop: 12,
   },
   sponsorButton: {
     flex: 1,

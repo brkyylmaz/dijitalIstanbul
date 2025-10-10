@@ -46,8 +46,10 @@ type FilterProps = {
 };
 
 const FILTER_OPTIONS: FilterOption[] = [
-  { id: 'camii', label: 'Camii' },
+  { id: 'mosque', label: 'Camii' },
   { id: 'turbe', label: 'Türbe' },
+  { id: 'church', label: 'Kilise' },
+  { id: 'school', label: 'Okul' },
 ];
 
 export const FILTER_HEIGHT = 40;

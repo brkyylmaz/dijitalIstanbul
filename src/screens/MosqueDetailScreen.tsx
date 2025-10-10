@@ -1,9 +1,8 @@
-import React, { useEffect, useLayoutEffect, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
   Image,
-  Linking,
   ScrollView,
   StyleSheet,
   Text,
@@ -11,6 +10,7 @@ import {
   View,
   useWindowDimensions,
 } from 'react-native';
+import Video from 'react-native-video';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/AppNavigator';
 import DetailOptions from '../components/detailOptions';
@@ -33,6 +33,31 @@ type PageListItem = {
   thumbnail_url: string;
 };
 
+type FavoriteHeaderProps = {
+  isFavorite: boolean;
+  onToggle: () => void;
+};
+
+const FavoriteHeader: React.FC<FavoriteHeaderProps> = ({ isFavorite, onToggle }) => (
+  <TouchableOpacity
+    style={[
+      styles.iconButton,
+      { backgroundColor: '#D9DDE08C' }
+    ]}
+    accessibilityLabel={isFavorite ? "Favorilerden çıkar" : "Favorilere ekle"}
+    activeOpacity={0.7}
+    onPress={onToggle}
+  >
+    <Text style={{
+      fontSize: 24,
+      color: isFavorite ? '#000000' : '#FFFFFF',
+      textAlign: 'center',
+    }}>
+      ★
+    </Text>
+  </TouchableOpacity>
+);
+
 function MosqueDetailScreen({ route, navigation }: Props) {
   const { mosqueId, mosqueData, sourceUrl } = route.params;
   const { width } = useWindowDimensions();
@@ -44,50 +69,61 @@ function MosqueDetailScreen({ route, navigation }: Props) {
   const [isFavorite, setIsFavorite] = useState<boolean>(false);
   const [selectedOption, setSelectedOption] = useState<'info' | 'audio' | 'location'>('info');
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
+  const [audioDuration, setAudioDuration] = useState(0);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [audioLoaded, setAudioLoaded] = useState(false);
+  const [audioError, setAudioError] = useState<string | null>(null);
+  const videoRef = useRef<any>(null);
+
+  const toggleFavorite = useCallback(() => {
+    setIsFavorite(!isFavorite);
+  }, [isFavorite]);
 
   useLayoutEffect(() => {
     navigation.setOptions({
       headerRight: () => (
-        <TouchableOpacity
-          style={[
-            styles.iconButton,
-            { backgroundColor: '#D9DDE08C' }
-          ]}
-          accessibilityLabel={isFavorite ? "Favorilerden çıkar" : "Favorilere ekle"}
-          activeOpacity={0.7}
-          onPress={() => {
-            setIsFavorite(!isFavorite);
-          }}
-        >
-          <Text style={{
-            fontSize: 24,
-            color: isFavorite ? '#000000' : '#FFFFFF',
-            textAlign: 'center',
-          }}>
-            ★
-          </Text>
-        </TouchableOpacity>
+        <FavoriteHeader 
+          isFavorite={isFavorite} 
+          onToggle={toggleFavorite} 
+        />
       ),
     });
-  }, [navigation, isFavorite]);
+  }, [navigation, isFavorite, toggleFavorite]);
 
   useEffect(() => {
     if (!mosqueData && sourceUrl) {
       const fetchDetail = async () => {
         try {
           const encodedUrl = encodeURIComponent(sourceUrl);
-          const response = await fetch(
-            `https://cuzdan.basaranamortisor.com/api/resolve_qr?url=${encodedUrl}`,
+          
+          // 1. ADIM: Önce resolve-qr'den ID'yi al (düz metin olarak geliyor)
+          const resolveResponse = await fetch(
+            `https://cuzdan.basaranamortisor.com/api/resolve-qr?url=${encodedUrl}`,
           );
 
-          if (!response.ok) {
-            throw new Error('Detail not found');
+          if (!resolveResponse.ok) {
+            throw new Error('QR kodu çözümlenemedi');
           }
 
-          const data = await response.json();
+          const resolvedMosqueId = await resolveResponse.text(); // ID düz metin olarak geliyor
+          
+          if (!resolvedMosqueId || resolvedMosqueId.trim() === '') {
+            throw new Error('Geçersiz QR kodu');
+          }
+
+          // 2. ADIM: Bu ID ile page-data'dan detaylı veriyi al
+          const dataResponse = await fetch(
+            `https://cuzdan.basaranamortisor.com/api/page-data?id=${resolvedMosqueId.trim()}`,
+          );
+
+          if (!dataResponse.ok) {
+            throw new Error('Cami detayları bulunamadı');
+          }
+
+          const data = await dataResponse.json();
           setDetail(data);
         } catch (error) {
-          setErrorMessage(error instanceof Error ? error.message : 'Unknown error');
+          setErrorMessage(error instanceof Error ? error.message : 'Beklenmeyen hata');
         } finally {
           setIsLoading(false);
         }
@@ -137,41 +173,81 @@ function MosqueDetailScreen({ route, navigation }: Props) {
 
     const info: HighlightInfo = {};
 
-    const walk = (node: any) => {
-      if (!node) {
-        return;
-      }
-
-      if (Array.isArray(node)) {
-        node.forEach(child => walk(child));
-        return;
-      }
-
-      if (typeof node !== 'object') {
-        return;
-      }
-
-      if (node.settings?.subtitle && node.settings?.title) {
-        const subtitle = String(node.settings.subtitle).toLowerCase();
-        const titleText = String(node.settings.title).trim();
-
-        if (subtitle.includes('yapım yılı')) {
-          info.buildYear = titleText;
-        } else if (subtitle.includes('konumu')) {
-          info.location = titleText;
-        } else if (subtitle.includes('kim yaptırdı')) {
-          info.patron = titleText;
-        } else if (subtitle.includes('mimarı')) {
-          info.architect = titleText;
+    // Pozisyon bazlı algoritma - her dilde aynı yapı
+    const extractInfoByPosition = (data: any) => {
+      try {
+        const mainSection = data[1]?.elements[0]?.elements[0]; // Ana yapı
+        
+        if (!mainSection) {
+          return {};
         }
-      }
-
-      if (Array.isArray(node.elements)) {
-        node.elements.forEach((child: any) => walk(child));
+        
+        // Sol column - Yapım yılı ve konum
+        const leftColumn = mainSection?.elements[0];
+        const buildYear = leftColumn?.elements[1]?.settings?.title;
+        const location = leftColumn?.elements[3]?.settings?.title;
+        
+        // Sağ column - Kim yaptırdı ve mimarı  
+        const rightColumn = mainSection?.elements[2];
+        const patron = rightColumn?.elements[1]?.settings?.title;
+        const architect = rightColumn?.elements[3]?.settings?.title;
+        
+        return { 
+          buildYear: buildYear?.trim(), 
+          location: location?.trim(), 
+          patron: patron?.trim(), 
+          architect: architect?.trim() 
+        };
+      } catch (error) {
+        console.warn('Pozisyon bazlı çıkarma hatası:', error);
+        return {};
       }
     };
 
-    walk(detail);
+    // Pozisyon bazlı çıkarma yap
+    const extractedInfo = extractInfoByPosition(detail);
+    
+    // Eğer pozisyon bazlı çıkarma başarısız olursa fallback olarak eski yöntemi kullan
+    if (!extractedInfo.buildYear && !extractedInfo.location && !extractedInfo.patron && !extractedInfo.architect) {
+      const walk = (node: any) => {
+        if (!node) {
+          return;
+        }
+
+        if (Array.isArray(node)) {
+          node.forEach(child => walk(child));
+          return;
+        }
+
+        if (typeof node !== 'object') {
+          return;
+        }
+
+        if (node.settings?.subtitle && node.settings?.title) {
+          const subtitle = String(node.settings.subtitle).toLowerCase();
+          const titleText = String(node.settings.title).trim();
+
+          if (subtitle.includes('yapım yılı') || subtitle.includes('year') || subtitle.includes('سنة البناء')) {
+            info.buildYear = titleText;
+          } else if (subtitle.includes('konumu') || subtitle.includes('location') || subtitle.includes('موقع')) {
+            info.location = titleText;
+          } else if (subtitle.includes('kim yaptırdı') || subtitle.includes('patron') || subtitle.includes('الذي أمر ببنائه')) {
+            info.patron = titleText;
+          } else if (subtitle.includes('mimarı') || subtitle.includes('architect') || subtitle.includes('معمار')) {
+            info.architect = titleText;
+          }
+        }
+
+        if (Array.isArray(node.elements)) {
+          node.elements.forEach((child: any) => walk(child));
+        }
+      };
+
+      walk(detail);
+    } else {
+      // Pozisyon bazlı çıkarma başarılıysa onu kullan
+      Object.assign(info, extractedInfo);
+    }
 
     const slugTitle = () => {
       if (!sourceUrl) {
@@ -193,32 +269,63 @@ function MosqueDetailScreen({ route, navigation }: Props) {
     }));
   }, [detail, sourceUrl]);
 
-  const playAudio = async () => {
+  const toggleAudio = () => {
     if (!mosqueId) {
       Alert.alert('Hata', 'Ses dosyası bulunamadı');
       return;
     }
 
-    try {
-      const audioUrl = `https://dijitalistanbul.org/dijitalistanbulaudio/${mosqueId}.mp3`;
-      console.log('🎵 Opening audio URL:', audioUrl);
-      
-      // Ses dosyasını cihazın varsayılan oynatıcısında aç
-      const supported = await Linking.canOpenURL(audioUrl);
-      if (supported) {
-        setIsPlayingAudio(true);
-        await Linking.openURL(audioUrl);
-        // 2 saniye sonra durumu sıfırla
-        setTimeout(() => setIsPlayingAudio(false), 2000);
-      } else {
-        Alert.alert('Hata', 'Ses dosyası açılamadı');
-      }
-    } catch (error) {
-      console.error('Audio playback error:', error);
-      Alert.alert('Hata', 'Ses dosyası oynatılırken bir hata oluştu');
-      setIsPlayingAudio(false);
+    if (audioError) {
+      Alert.alert('Hata', 'Ses dosyası yüklenemedi');
+      return;
+    }
+
+    setIsPlayingAudio(!isPlayingAudio);
+  };
+
+  const onAudioLoad = (data: any) => {
+    setAudioDuration(data.duration);
+    setAudioLoaded(true);
+    setAudioError(null);
+  };
+
+  const onAudioProgress = (data: any) => {
+    setCurrentTime(data.currentTime);
+  };
+
+  const onAudioError = (error: any) => {
+    console.error('Audio error:', error);
+    setAudioError('Ses dosyası yüklenemedi');
+    setIsPlayingAudio(false);
+  };
+
+  const onAudioEnd = () => {
+    setIsPlayingAudio(false);
+    setCurrentTime(0);
+  };
+
+  const formatTime = (timeInSeconds: number): string => {
+    const minutes = Math.floor(timeInSeconds / 60);
+    const seconds = Math.floor(timeInSeconds % 60);
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  };
+
+  const seekBackward = () => {
+    if (videoRef.current && audioLoaded) {
+      const newTime = Math.max(0, currentTime - 10);
+      videoRef.current.seek(newTime);
+      setCurrentTime(newTime);
     }
   };
+
+  const seekForward = () => {
+    if (videoRef.current && audioLoaded) {
+      const newTime = Math.min(audioDuration, currentTime + 10);
+      videoRef.current.seek(newTime);
+      setCurrentTime(newTime);
+    }
+  };
+
 
   // const payloadPreview = !detail 
   //   ? 'Veri bulunamadı' 
@@ -303,27 +410,120 @@ function MosqueDetailScreen({ route, navigation }: Props) {
           </View>
         ) : selectedOption === 'audio' ? (
           <View style={styles.audioContainer}>
-            <View style={styles.audioCard}>
-              <Text style={styles.audioTitle}>Sesli Anlatım</Text>
-              <Text style={styles.audioDescription}>
-                {highlight.title ? `${highlight.title} hakkında sesli anlatım` : 'Cami hakkında sesli anlatım'}
-              </Text>
-              
-              <TouchableOpacity 
-                style={styles.playButton}
-                onPress={playAudio}
-                activeOpacity={0.7}
-                disabled={isPlayingAudio}
-              >
-                <Text style={styles.playButtonText}>
-                  {isPlayingAudio ? '🎵 Açılıyor...' : '▶️ Sesli Anlatımı Başlat'}
-                </Text>
-              </TouchableOpacity>
-              
+            {/* Modern Glassmorphism Audio Player */}
+            <View style={styles.modernAudioCard}>
               {mosqueId && (
-                <Text style={styles.audioNote}>
-                  Ses dosyası cihazınızın varsayılan oynatıcısında açılacak
-                </Text>
+                <>
+                  <Video
+                    ref={videoRef}
+                    source={{ uri: `https://dijitalistanbul.org/dijitalistanbulaudio/${mosqueId}.mp3` }}
+                    paused={!isPlayingAudio}
+                    onLoad={onAudioLoad}
+                    onProgress={onAudioProgress}
+                    onError={onAudioError}
+                    onEnd={onAudioEnd}
+                    playInBackground={true}
+                    playWhenInactive={false}
+                    style={styles.audioPlayer}
+                  />
+                  
+                  {/* Floating Track Info Card */}
+                  <View style={styles.modernTrackInfo}>
+                    <View style={styles.trackIconContainer}>
+                      <Text style={styles.trackIcon}>🎵</Text>
+                    </View>
+                    <View style={styles.trackTextContainer}>
+                      <Text style={styles.modernTrackTitle} numberOfLines={1}>
+                        {highlight.title || 'Ses Dosyası'}
+                      </Text>
+                      <Text style={styles.modernTrackSubtitle} numberOfLines={1}>
+                        Dijital İstanbul
+                      </Text>
+                    </View>
+                  </View>
+                  
+                  {/* Modern Progress Section */}
+                  {audioLoaded && (
+                    <View style={styles.modernProgressSection}>
+                      <View style={styles.modernProgressBar}>
+                        <View 
+                          style={[
+                            styles.modernProgressFill, 
+                            { width: audioDuration > 0 ? `${(currentTime / audioDuration) * 100}%` : '0%' }
+                          ]} 
+                        />
+                        <View style={styles.modernProgressGlow} />
+                      </View>
+                      <View style={styles.modernTimeContainer}>
+                        <Text style={styles.modernTimeText}>{formatTime(currentTime)}</Text>
+                        <Text style={styles.modernTimeText}>{formatTime(audioDuration)}</Text>
+                      </View>
+                    </View>
+                  )}
+                  
+                  {/* Premium Control Buttons */}
+                  <View style={styles.modernPlayerControls}>
+                    <TouchableOpacity 
+                      style={[styles.modernControlButton, !audioLoaded && styles.disabledButton]}
+                      onPress={seekBackward}
+                      activeOpacity={0.8}
+                      disabled={!audioLoaded}
+                    >
+                      <View style={styles.controlIconContainer}>
+                        <Text style={styles.modernControlIcon}>⏪</Text>
+                      </View>
+                      <Text style={styles.modernControlLabel}>10s</Text>
+                    </TouchableOpacity>
+                    
+                    <TouchableOpacity 
+                      style={[styles.modernMainPlayButton, isPlayingAudio && styles.pauseButton]}
+                      onPress={toggleAudio}
+                      activeOpacity={0.8}
+                      disabled={!audioLoaded && !audioError}
+                    >
+                      <View style={styles.mainPlayIconContainer}>
+                        <Text style={styles.modernMainPlayText}>
+                          {!audioLoaded && !audioError ? '⏳' :
+                           audioError ? '❌' :
+                           isPlayingAudio ? '⏸' : '▶'}
+                        </Text>
+                      </View>
+                    </TouchableOpacity>
+                    
+                    <TouchableOpacity 
+                      style={[styles.modernControlButton, !audioLoaded && styles.disabledButton]}
+                      onPress={seekForward}
+                      activeOpacity={0.8}
+                      disabled={!audioLoaded}
+                    >
+                      <View style={styles.controlIconContainer}>
+                        <Text style={styles.modernControlIcon}>⏩</Text>
+                      </View>
+                      <Text style={styles.modernControlLabel}>10s</Text>
+                    </TouchableOpacity>
+                  </View>
+                  
+                  {!audioLoaded && !audioError && (
+                    <View style={styles.modernLoadingContainer}>
+                      <Text style={styles.modernLoadingIcon}>🎧</Text>
+                      <Text style={styles.modernLoadingText}>Yükleniyor...</Text>
+                    </View>
+                  )}
+                  
+                  {audioError && (
+                    <View style={styles.modernErrorContainer}>
+                      <Text style={styles.modernErrorIcon}>⚠️</Text>
+                      <Text style={styles.modernErrorText}>Ses dosyası yüklenemedi</Text>
+                    </View>
+                  )}
+                </>
+              )}
+              
+              {!mosqueId && (
+                <View style={styles.modernErrorContainer}>
+                  <Text style={styles.modernErrorIcon}>🔇</Text>
+                  <Text style={styles.modernErrorText}>Ses dosyası bulunamadı</Text>
+                </View>
               )}
             </View>
           </View>
@@ -518,46 +718,184 @@ const styles = StyleSheet.create({
   audioContainer: {
     marginBottom: 24,
   },
-  audioCard: {
-    backgroundColor: 'transparent',
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: '#000000',
-    padding: 20,
+  modernAudioCard: {
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    borderRadius: 28,
+    padding: 28,
     alignItems: 'center',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.15,
+    shadowRadius: 24,
+    elevation: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.8)',
   },
-  audioTitle: {
+  audioPlayer: {
+    width: 0,
+    height: 0,
+  },
+  modernTrackInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(27, 76, 132, 0.05)',
+    borderRadius: 20,
+    padding: 16,
+    marginBottom: 24,
+    width: '100%',
+  },
+  trackIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: 'rgba(27, 76, 132, 0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 16,
+  },
+  trackIcon: {
+    fontSize: 24,
+  },
+  trackTextContainer: {
+    flex: 1,
+  },
+  modernTrackTitle: {
     fontSize: 18,
     fontWeight: '700',
     color: '#1F2933',
-    marginBottom: 8,
-    textAlign: 'center',
+    marginBottom: 4,
   },
-  audioDescription: {
+  modernTrackSubtitle: {
     fontSize: 14,
-    color: '#52606D',
-    textAlign: 'center',
-    marginBottom: 20,
-    lineHeight: 20,
+    fontWeight: '500',
+    color: '#6B7280',
   },
-  playButton: {
-    backgroundColor: '#1B1B1B',
-    borderRadius: 30,
-    paddingHorizontal: 24,
-    paddingVertical: 12,
+  modernProgressSection: {
+    width: '100%',
+    marginBottom: 28,
+  },
+  modernProgressBar: {
+    height: 6,
+    backgroundColor: 'rgba(27, 76, 132, 0.1)',
+    borderRadius: 3,
+    overflow: 'hidden',
+    position: 'relative',
     marginBottom: 12,
   },
-  playButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
-    textAlign: 'center',
+  modernProgressFill: {
+    height: '100%',
+    backgroundColor: '#3B82F6',
+    borderRadius: 3,
+    position: 'relative',
   },
-  audioNote: {
-    fontSize: 12,
-    color: '#52606D',
+  modernProgressGlow: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(59, 130, 246, 0.3)',
+    borderRadius: 3,
+  },
+  modernTimeContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+  },
+  modernTimeText: {
+    fontSize: 13,
+    color: '#6B7280',
+    fontWeight: '600',
+  },
+  modernPlayerControls: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 24,
+    marginBottom: 8,
+  },
+  modernControlButton: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 12,
+    borderRadius: 16,
+    backgroundColor: 'rgba(27, 76, 132, 0.08)',
+    minWidth: 64,
+  },
+  disabledButton: {
+    opacity: 0.4,
+  },
+  controlIconContainer: {
+    marginBottom: 4,
+  },
+  modernControlIcon: {
+    fontSize: 20,
+    color: '#1B4C84',
+  },
+  modernControlLabel: {
+    fontSize: 11,
+    color: '#6B7280',
+    fontWeight: '600',
+  },
+  modernMainPlayButton: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: '#1B4C84',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#1B4C84',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.35,
+    shadowRadius: 16,
+    elevation: 8,
+    transform: [{ scale: 1 }],
+  },
+  pauseButton: {
+    backgroundColor: '#EF4444',
+    shadowColor: '#EF4444',
+  },
+  mainPlayIconContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modernMainPlayText: {
+    fontSize: 32,
+    color: '#FFFFFF',
+    fontWeight: '600',
+  },
+  modernLoadingContainer: {
+    alignItems: 'center',
+    padding: 16,
+    backgroundColor: 'rgba(59, 130, 246, 0.05)',
+    borderRadius: 16,
+    marginTop: 8,
+  },
+  modernLoadingIcon: {
+    fontSize: 28,
+    marginBottom: 8,
+  },
+  modernLoadingText: {
+    fontSize: 14,
+    color: '#6B7280',
+    fontWeight: '500',
+  },
+  modernErrorContainer: {
+    alignItems: 'center',
+    padding: 16,
+    backgroundColor: 'rgba(239, 68, 68, 0.05)',
+    borderRadius: 16,
+    marginTop: 8,
+  },
+  modernErrorIcon: {
+    fontSize: 28,
+    marginBottom: 8,
+  },
+  modernErrorText: {
+    fontSize: 14,
+    color: '#EF4444',
+    fontWeight: '500',
     textAlign: 'center',
-    fontStyle: 'italic',
   },
   });
 
