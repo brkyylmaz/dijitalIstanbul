@@ -8,7 +8,6 @@ import {
   Image,
   Platform,
   StyleSheet,
-  Text,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -16,6 +15,7 @@ import { CustomTabBar } from '../components/CustomTabBar';
 import CulturalAssetsScreen from '../screens/CulturalAssetsScreen';
 import HomeScreen from '../screens/HomeScreen';
 import MosqueDetailScreen from '../screens/MosqueDetailScreen';
+import MultipleTombDetailScreen from '../screens/MultipleTombDetail';
 import QRScannerScreen from '../screens/QRScannerScreen';
 
 export type RootStackParamList = {
@@ -24,6 +24,12 @@ export type RootStackParamList = {
     mosqueId?: string;
     sourceUrl?: string;
     mosqueData?: unknown;
+    isFavorite?: boolean;
+  };
+  MultipleTombDetail: {
+    tombId?: string;
+    sourceUrl?: string;
+    tombData?: unknown;
     isFavorite?: boolean;
   };
 };
@@ -266,7 +272,40 @@ function AppNavigator() {
         <Stack.Screen
           component={MosqueDetailScreen}
           name="MosqueDetail"
-          options={({ navigation, route }) => {
+          options={({ navigation }) => {
+            return {
+              headerShown: true,
+              headerTransparent: true,
+              headerTitle: '',
+              headerShadowVisible: false,
+              headerStyle: headerStyles.header,
+              headerLeftContainerStyle: {
+                paddingLeft: 16,
+              },
+              headerRightContainerStyle: {
+                paddingRight: 16,
+              },
+              headerLeft: () => (
+                <TouchableOpacity
+                  style={headerStyles.iconButton}
+                  accessibilityLabel="Geri"
+                  activeOpacity={0.7}
+                  onPress={() => navigation.goBack()}
+                >
+                  <Image
+                    resizeMode="contain"
+                    source={require('../assets/images/backIcon.png')}
+                    style={headerStyles.favoriteIcon}
+                  />
+                </TouchableOpacity>
+              ),
+            };
+          }}
+        />
+        <Stack.Screen
+          component={MultipleTombDetailScreen}
+          name="MultipleTombDetail"
+          options={({ navigation }) => {
             return {
               headerShown: true,
               headerTransparent: true,

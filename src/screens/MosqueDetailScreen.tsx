@@ -14,8 +14,34 @@ import Video from 'react-native-video';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/AppNavigator';
 import DetailOptions from '../components/detailOptions';
+import KeyValueItem from '../components/KeyValueItem';
 
 const PAGE_LIST_API = 'https://cuzdan.basaranamortisor.com/api/page-list';
+
+// Dummy Ek Bilgiler - API'den gelecek
+const DUMMY_ADDITIONAL_INFO = {
+  changes: {
+    label: "Yapımından Sonraki Değişiklikler:",
+    values: [
+      "Ayasofya, aynı yerde üç kez inşa edilmiştir.",
+      'İlk Ayasofya yapısı, "Büyük Kilise" olarak bilinir ve II. Konstantin döneminde, 360 yılında ibadete açılmıştır ancak 404 yılında çıkan bir isyan sırasında meydana gelen yangında neredeyse tamamen yok olmuş ve bu ilk yapıya dair hiçbir kalıntı günümüze ulaşmamıştır.',
+      "Ayasofya'nın ikinci yapısı, ilk yapının kalıntıları üzerine II. Theodosius tarafından inşa edilmiş ve 415 yılında ibadete açılmıştır. Bu yapı da bazilika planında tasarlanmış ve ahşap bir çatıyla örtülmüştür. Ancak, 532 yılında İmparator I. Justinianus'a karşı gerçekleştirilen Nika Ayaklanması sırasında bu yapı da yakılarak tahrip edilmiştir.",
+      "537 yılında patriklik katedrali olarak bazilika planında tamamlanan yapı, 1453'te İstanbul'un Fethi'nin ardından Osmanlı Padişahı Fatih Sultan Mehmed tarafından camiye dönüştürülmüştür.",
+      "Osmanlı döneminde, kilise formundan camiye dönüştürülen yapıya minareler, mihrap, minber ve hünkar mahfili gibi unsurlar eklenmiştir.",
+      "1935 yılında cami statüsü kaldırılmış ve müze haline getirilmiştir.",
+      "2020 yılında ise Ayasofya yeniden cami olarak kullanılmaya başlanmıştır."
+    ]
+  },
+  features: {
+    label: "Öne Çıkan Özellikleri:",
+    values: [
+      "Doğu Roma ve Osmanlı mimarisinin birleştiği en önemli eserlerden biridir.",
+      "Ayasofya, mimari açıdan dünya tarihinin en önemli yapılarından biridir. En dikkat çekici özelliği, 31 metre çapındaki devasa kubbesiyle sanki havada asılı gibi durmasıdır; bu, Erken Bizans mimarisinde bir devrim olarak kabul edilir. Kubbe, 40 pencereyle çevrilidir ve içeriye mistik bir ışık sağlar.",
+      'İç mekanındaki mozaikler, özellikle "Deesis Mozaiği" ve "Meryem Ana ile Çocuk İsa" tasvirleri, Bizans sanatının zirvesini yansıtır. Dört minaresi, Osmanlı döneminde eklenmiştir ve yapının siluetine eşsiz bir karakter katar.',
+      "İçerisindeki renkli mermer döşemeler, çeşitli bölgelerden getirilen taşlarla kaplı sütunlar ve geniş hacimli naos (ana ibadet alanı), yapının ihtişamını artırır. Ayasofya'nın akustiği de dikkat çekicidir; kubbenin altında yayılan ses, yapının büyüklüğüne rağmen yankılanarak eşsiz bir deneyim sunar."
+    ]
+  }
+};
 
 type Props = NativeStackScreenProps<RootStackParamList, 'MosqueDetail'>;
 
@@ -74,6 +100,9 @@ function MosqueDetailScreen({ route, navigation }: Props) {
   const [audioLoaded, setAudioLoaded] = useState(false);
   const [audioError, setAudioError] = useState<string | null>(null);
   const videoRef = useRef<any>(null);
+  
+  // Dummy ek bilgileri kullan - Gerçek implementasyonda API'den gelecek
+  const [additionalInfo] = useState(DUMMY_ADDITIONAL_INFO);
 
   const toggleFavorite = useCallback(() => {
     setIsFavorite(!isFavorite);
@@ -407,6 +436,19 @@ function MosqueDetailScreen({ route, navigation }: Props) {
                 <Text style={styles.infoCardValue}>{highlight.architect}</Text>
               </View>
             ) : null}
+            
+            {/* Ek Bilgiler - Dummy data'dan geliyor */}
+            <View style={styles.keyValueSection}>
+              <KeyValueItem 
+                label={additionalInfo.changes.label}
+                value={additionalInfo.changes.values}
+              />
+              
+              <KeyValueItem 
+                label={additionalInfo.features.label}
+                value={additionalInfo.features.values}
+              />
+            </View>
           </View>
         ) : selectedOption === 'audio' ? (
           <View style={styles.audioContainer}>
@@ -581,6 +623,11 @@ const styles = StyleSheet.create({
   infoContainer: {
     gap: 12,
     marginBottom: 24,
+  },
+  keyValueSection: {
+    backgroundColor: 'transparent',
+    marginTop: 12,
+    gap: 12,
   },
   infoRow: {
     flexDirection: 'row',

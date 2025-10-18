@@ -28,6 +28,13 @@ type PageItem = {
 
 const API_URL = 'https://cuzdan.basaranamortisor.com/api/page-list';
 
+// Dummy Türbe Verisi - API'de henüz türbe tipi olmadığı için geçici olarak eklendi
+const DUMMY_TOMB_ITEM: PageItem = {
+  id: 99999,
+  title: 'III. Mustafa Türbesi',
+  thumbnail_url: 'https://dijitalistanbul.org/wp-content/uploads/2024/08/turbe.png',
+  page_type: 'turbe'
+};
 
 type TabParamList = {
   CulturalAssets: { filter?: string };
@@ -67,7 +74,19 @@ const CulturalAssetsScreen = React.memo(function CulturalAssetsScreen() {
   }, []);
 
   const filteredItems = useMemo(() => {
-    // Önce page_type'a göre filtrele
+    // Türbe seçiliyse dummy veriyi göster
+    if (selectedFilter === 'turbe') {
+      // Search varsa ve dummy title'a match etmiyorsa boş döndür
+      if (searchText.length >= 3) {
+        const searchLower = searchText.toLowerCase().trim();
+        if (!DUMMY_TOMB_ITEM.title.toLowerCase().includes(searchLower)) {
+          return [];
+        }
+      }
+      return [DUMMY_TOMB_ITEM];
+    }
+    
+    // Diğer tipler için normal filtreleme
     let filtered = items.filter(item => item.page_type === selectedFilter);
     
     // Sonra search'e göre filtrele (eğer 3+ karakter varsa)
@@ -130,25 +149,36 @@ const CulturalAssetsScreen = React.memo(function CulturalAssetsScreen() {
   const keyExtractor = useCallback((item: PageItem) => item.id.toString(), []);
 
   const handleItemPress = useCallback(async (item: PageItem) => {
+    // Türbe tipindeyse MultipleTombDetail sayfasına git
+    if (item.page_type === 'turbe') {
+      navigation.navigate('MultipleTombDetail', {
+        tombId: item.id.toString(),
+        tombData: null,
+        sourceUrl: `https://qr.dijitalistanbul.org/u/${item.id}`
+      });
+      return;
+    }
+
+    // Diğer tipler için (mosque, vb.) mevcut mantık
     try {
-      // Cami detaylarını API'den çek
+      // Detayları API'den çek
       const response = await fetch(
         `https://cuzdan.basaranamortisor.com/api/page-data?id=${item.id}`
       );
 
       if (!response.ok) {
-        throw new Error('Cami detayları yüklenemedi');
+        throw new Error('Detaylar yüklenemedi');
       }
 
-      const mosqueData = await response.json();
+      const itemData = await response.json();
 
       navigation.navigate('MosqueDetail', {
         mosqueId: item.id.toString(),
-        mosqueData,
+        mosqueData: itemData,
         sourceUrl: `https://qr.dijitalistanbul.org/u/${item.id}`
       });
     } catch (error) {
-      console.error('Cami detayları yüklenirken hata:', error);
+      console.error('Detaylar yüklenirken hata:', error);
       // Hata durumunda da navigasyonu yap ama data olmadan
       navigation.navigate('MosqueDetail', {
         mosqueId: item.id.toString(),
