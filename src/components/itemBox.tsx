@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Image, StyleSheet, Text, View, ActivityIndicator, TouchableOpacity } from 'react-native';
+import { t } from '../modules/i18n';
 
 type ItemBoxProps = {
   title: string;
@@ -51,11 +52,11 @@ function ItemBoxComponent({ title, thumbnailUrl, year = '360 - 537', location = 
         </Text>
         <View style={styles.infoRow}>
           <View style={styles.infoColumn}>
-            <Text style={styles.infoLabel}>Yapım</Text>
+            <Text style={styles.infoLabel}>{t('item_box.built_year')}</Text>
             <Text style={styles.infoValue}>{year}</Text>
           </View>
           <View style={styles.infoColumn}>
-            <Text style={styles.infoLabel}>Konum</Text>
+            <Text style={styles.infoLabel}>{t('item_box.location')}</Text>
             <Text style={styles.infoValue}>{location}</Text>
           </View>
         </View>

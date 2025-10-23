@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -9,32 +9,21 @@ import {
   InteractionManager,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useFocusEffect, useNavigation, useRoute, RouteProp } from '@react-navigation/native';
+import { useFocusEffect, useNavigation, useRoute, RouteProp, useIsFocused } from '@react-navigation/native';
 import { CompositeNavigationProp } from '@react-navigation/native';
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { getHeaderExtension, HORIZONTAL_SCREEN_PADDING, HEADER_ICON_BUTTON_HEIGHT, HEADER_TO_SEARCH_GAP } from '../theme/layout';
-import SearchInput from '../components/searchInput';
-import Filter from '../components/filter';
+import { getHeaderExtension, HORIZONTAL_SCREEN_PADDING, HEADER_ICON_BUTTON_HEIGHT, HEADER_TO_SEARCH_GAP, uiScaleFactor } from '../theme/layout';
+import SearchInput, { SEARCH_INPUT_HEIGHT } from '../components/searchInput';
+import Filter, { FILTER_HEIGHT } from '../components/filter';
 import ItemBox from '../components/itemBox';
 import { RootStackParamList } from '../navigation/AppNavigator';
-
-type PageItem = {
-  id: number;
-  title: string;
-  thumbnail_url: string;
-  page_type: string;
-};
-
-const API_URL = 'https://cuzdan.basaranamortisor.com/api/page-list';
-
-// Dummy Türbe Verisi - API'de henüz türbe tipi olmadığı için geçici olarak eklendi
-const DUMMY_TOMB_ITEM: PageItem = {
-  id: 99999,
-  title: 'III. Mustafa Türbesi',
-  thumbnail_url: 'https://dijitalistanbul.org/wp-content/uploads/2024/08/turbe.png',
-  page_type: 'turbe'
-};
+import { useSnapshot } from 'valtio';
+import { store } from '../store+client/store';
+import { PageListItem } from "../types/listElem";
+import { t } from '../modules/i18n';
+import { HeaderRight } from '../components/HeaderComponent';
+import { favoritesStore } from '../store+client/favorites';
 
 type TabParamList = {
   CulturalAssets: { filter?: string };
@@ -45,21 +34,58 @@ type NavigationProp = CompositeNavigationProp<
   NativeStackNavigationProp<RootStackParamList>
 >;
 
+const filters = {
+  mosque: ["mosque"],
+  mausoleum: ["mausoleum-single", "mausoleum-multi"],
+  church: [],
+  school: []
+}
+
 const CulturalAssetsScreen = React.memo(function CulturalAssetsScreen() {
   const insets = useSafeAreaInsets();
   const { height } = useWindowDimensions();
   const navigation = useNavigation<NavigationProp>();
   const route = useRoute<RouteProp<TabParamList, 'CulturalAssets'>>();
   
-  const headerBaseHeight = useMemo(() => getHeaderExtension(height), [height]);
-  const headerTotalHeight = useMemo(() => headerBaseHeight + insets.top * 1.5, [headerBaseHeight, insets.top]);
+  const headerTotalHeight = getHeaderExtension(height);
   const searchInputTopOffset = useMemo(() => insets.top + HEADER_ICON_BUTTON_HEIGHT + HEADER_TO_SEARCH_GAP, [insets.top]);
   
   const [searchText, setSearchText] = useState('');
-  const [selectedFilter, setSelectedFilter] = useState('mosque');
-  const [items, setItems] = useState<PageItem[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [selectedFilter, setSelectedFilter] = useState("mosque");
+  const f = useIsFocused();
+  const [favActive, setFavActive] = useState(false);
+  const favSnap = useSnapshot(favoritesStore)
+
+  useEffect(()=>{
+    if (!f){return}
+
+    const filter = route?.params?.filter;
+    if (filter){
+      setSelectedFilter(filter);
+    }    
+  }, [f]);
+
+  // Control HeaderRight component props
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerRight: () => (
+        <HeaderRight 
+          rightButtons={favActive ? 'favorites-active' : 'favorites'}
+          showLanguageSelector={true}
+          accessibilityLabels={{
+            favorites: t('navigation.favorites'),
+            languageSelection: t('navigation.language_selection_label')
+          }}
+          onFavoritePress={()=>{
+            console.log("onFavoriteasdasdPress");
+            setFavActive(x => !x);
+          }}
+        />
+      ),
+    });
+  }, [navigation, favActive]);
+
+  const snap = useSnapshot(store);
 
   const handleFilterChange = useCallback((filterId: string) => {
     setSelectedFilter(filterId);
@@ -73,168 +99,31 @@ const CulturalAssetsScreen = React.memo(function CulturalAssetsScreen() {
     setSearchText('');
   }, []);
 
-  const filteredItems = useMemo(() => {
-    // Türbe seçiliyse dummy veriyi göster
-    if (selectedFilter === 'turbe') {
-      // Search varsa ve dummy title'a match etmiyorsa boş döndür
-      if (searchText.length >= 3) {
-        const searchLower = searchText.toLowerCase().trim();
-        if (!DUMMY_TOMB_ITEM.title.toLowerCase().includes(searchLower)) {
-          return [];
-        }
-      }
-      return [DUMMY_TOMB_ITEM];
+  const handleItemPress = (item: PageListItem)=>{
+    switch (item.page_type) {
+      case "mosque":
+      case "mausoleum-single":
+        navigation.navigate('MosqueDetail', {
+          postID: item.id
+        })
+        break;
+
+      case "mausoleum-multi":
+        navigation.navigate('MultipleTombDetail', {
+          postID: item.id
+        })
+        break;
+
     }
-    
-    // Diğer tipler için normal filtreleme
-    let filtered = items.filter(item => item.page_type === selectedFilter);
-    
-    // Sonra search'e göre filtrele (eğer 3+ karakter varsa)
-    if (searchText.length >= 3) {
-      const searchLower = searchText.toLowerCase().trim();
-      filtered = filtered.filter(item => 
-        item.title.toLowerCase().includes(searchLower)
-      );
-    }
-    
-    return filtered;
-  }, [items, searchText, selectedFilter]);
-
-  useFocusEffect(
-    useCallback(() => {
-      console.log('🎯 CulturalAssetsScreen FOCUSED');
-      
-      // Route parametresinden filtre değerini al ve set et
-      if (route.params?.filter) {
-        setSelectedFilter(route.params.filter);
-      }
-      
-      return () => {
-        console.log('👋 CulturalAssetsScreen BLURRED');
-      };
-    }, [route.params?.filter])
-  );
-
-  useEffect(() => {
-    console.log('🚀 CulturalAssetsScreen MOUNTED - Data fetching started');
-    const fetchItems = async () => {
-      try {
-        console.log('📡 API Request started...');
-        const response = await fetch(API_URL);
-        if (!response.ok) {
-          throw new Error('Data not found');
-        }
-
-        const data = await response.json();
-
-        if (Array.isArray(data)) {
-          console.log('✅ API Response received:', data.length, 'items');
-          InteractionManager.runAfterInteractions(() => {
-            setItems(data.filter(item => item.title && item.thumbnail_url && item.page_type));
-            setIsLoading(false);
-            console.log('🎉 Data set in state, loading finished');
-          });
-        } else {
-          throw new Error('Unexpected data format');
-        }
-      } catch (error) {
-        setErrorMessage(error instanceof Error ? error.message : 'Unknown error');
-        setIsLoading(false);
-      }
-    };
-
-    fetchItems();
-  }, []);
-
-  const keyExtractor = useCallback((item: PageItem) => item.id.toString(), []);
-
-  const handleItemPress = useCallback(async (item: PageItem) => {
-    // Türbe tipindeyse MultipleTombDetail sayfasına git
-    if (item.page_type === 'turbe') {
-      navigation.navigate('MultipleTombDetail', {
-        tombId: item.id.toString(),
-        tombData: null,
-        sourceUrl: `https://qr.dijitalistanbul.org/u/${item.id}`
-      });
-      return;
-    }
-
-    // Diğer tipler için (mosque, vb.) mevcut mantık
-    try {
-      // Detayları API'den çek
-      const response = await fetch(
-        `https://cuzdan.basaranamortisor.com/api/page-data?id=${item.id}`
-      );
-
-      if (!response.ok) {
-        throw new Error('Detaylar yüklenemedi');
-      }
-
-      const itemData = await response.json();
-
-      navigation.navigate('MosqueDetail', {
-        mosqueId: item.id.toString(),
-        mosqueData: itemData,
-        sourceUrl: `https://qr.dijitalistanbul.org/u/${item.id}`
-      });
-    } catch (error) {
-      console.error('Detaylar yüklenirken hata:', error);
-      // Hata durumunda da navigasyonu yap ama data olmadan
-      navigation.navigate('MosqueDetail', {
-        mosqueId: item.id.toString(),
-        mosqueData: null,
-        sourceUrl: `https://qr.dijitalistanbul.org/u/${item.id}`
-      });
-    }
-  }, [navigation]);
-
-  const renderItem = useCallback(({ item }: { item: PageItem }) => (
-    <ItemBox
-      title={item.title}
-      thumbnailUrl={item.thumbnail_url}
-      year="1471-72"
-      location="Üsküdar, İstanbul"
-      onPress={() => handleItemPress(item)}
-    />
-  ), [handleItemPress]);
-
-  if (isLoading) {
-    return (
-      <View style={styles.container}>
-        <View
-          style={[
-            styles.headerBackground,
-            {
-              height: headerTotalHeight,
-              paddingTop: insets.top,
-            },
-          ]}
-        />
-        <View style={[styles.centeredContainer, { paddingTop: insets.top }]}>
-          <ActivityIndicator size="large" color="#1B4C84" />
-        </View>
-      </View>
-    );
   }
 
-  if (errorMessage) {
-    return (
-      <View style={styles.container}>
-        <View
-          style={[
-            styles.headerBackground,
-            {
-              height: headerTotalHeight,
-              paddingTop: insets.top,
-            },
-          ]}
-        />
-        <View style={[styles.centeredContainer, { paddingTop: insets.top }]}>
-          <Text style={styles.errorText}>{errorMessage}</Text>
-        </View>
-      </View>
-    );
-  }
+  const renderItem = ({item}: {item: PageListItem}) => <ItemBox
+    title={item.title}
+    thumbnailUrl={item.thumbnail_url}
+    year={item.built_at}
+    location={item.location_str}
+    onPress={() => handleItemPress(item)}
+  />;
 
   return (
     <View style={styles.container}>
@@ -244,6 +133,7 @@ const CulturalAssetsScreen = React.memo(function CulturalAssetsScreen() {
           {
             height: headerTotalHeight,
             paddingTop: insets.top,
+            
           },
         ]}
       />
@@ -252,14 +142,20 @@ const CulturalAssetsScreen = React.memo(function CulturalAssetsScreen() {
           onChangeText={handleSearchChange} 
           value={searchText} 
           onClear={handleClearSearch}
+          placeholder={favActive ? t('search.favorites') : t('search.placeholder')}
+          style={{minHeight: SEARCH_INPUT_HEIGHT*uiScaleFactor}}
         />
-        <Filter selectedFilter={selectedFilter} onFilterChange={handleFilterChange} />
+        <Filter selectedFilter={selectedFilter} onFilterChange={handleFilterChange} buttonStyle={{height: FILTER_HEIGHT*uiScaleFactor}} />
       </View>
       <FlatList
-        style={[styles.flatListStyle, { marginTop: headerTotalHeight + 16 }]}
+        style={[styles.flatListStyle, { marginTop: headerTotalHeight }]}
         contentContainerStyle={styles.listContent}
-        data={filteredItems}
-        keyExtractor={keyExtractor}
+        data={snap.pageList.filter(x => 
+          filters[selectedFilter].includes(x.page_type) 
+          && x.title.toLowerCase().includes(searchText.toLowerCase())
+          && (favActive ? favSnap.favorites.includes(x.id) : true)
+        )}
+        keyExtractor={(x: PageListItem) => x.id.toString()}
         renderItem={renderItem}
         removeClippedSubviews={false}
         maxToRenderPerBatch={5}
@@ -275,7 +171,7 @@ const CulturalAssetsScreen = React.memo(function CulturalAssetsScreen() {
           searchText.length >= 3 ? (
             <View style={styles.emptyContainer}>
               <Text style={styles.emptyText}>
-                "{searchText}" found no results
+                {t('search.no_results', { searchTerm: searchText })}
               </Text>
             </View>
           ) : null
@@ -307,7 +203,7 @@ const styles = StyleSheet.create({
     right: 0,
     zIndex: 1,
     paddingHorizontal: HORIZONTAL_SCREEN_PADDING,
-    backgroundColor: 'transparent',
+    backgroundColor: '',
   },
   centeredContainer: {
     flex: 1,
@@ -318,6 +214,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingBottom: 140,
     gap: 16,
+    paddingTop: 16
   },
   flatListStyle: {
     flex: 1,

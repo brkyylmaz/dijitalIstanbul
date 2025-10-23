@@ -1,11 +1,14 @@
 import React from 'react';
 import {
   ScrollView,
+  StyleProp,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
+  ViewStyle,
 } from 'react-native';
+import { t } from '../modules/i18n';
 
 type FilterOption = {
   id: string;
@@ -16,14 +19,16 @@ type FilterButtonProps = {
   label: string;
   isSelected: boolean;
   onPress: () => void;
+  buttonStyle?: StyleProp<ViewStyle>;
 };
 
-const FilterButton = React.memo(({ label, isSelected, onPress }: FilterButtonProps) => {
+const FilterButton = React.memo(({ label, isSelected, onPress, buttonStyle }: FilterButtonProps) => {
   return (
     <TouchableOpacity
       style={[
         styles.filterButton,
         isSelected && styles.filterButtonSelected,
+        buttonStyle,
       ]}
       onPress={onPress}
       activeOpacity={0.7}
@@ -43,18 +48,19 @@ const FilterButton = React.memo(({ label, isSelected, onPress }: FilterButtonPro
 type FilterProps = {
   selectedFilter: string;
   onFilterChange: (filterId: string) => void;
+  buttonStyle?: StyleProp<ViewStyle>;
 };
 
 const FILTER_OPTIONS: FilterOption[] = [
-  { id: 'mosque', label: 'Camii' },
-  { id: 'turbe', label: 'Türbe' },
-  { id: 'church', label: 'Kilise' },
-  { id: 'school', label: 'Okul' },
+  { id: 'mosque', label: "filters.mosque" },
+  { id: 'mausoleum', label: "filters.mausoleum" },
+  // { id: 'church', label: t('filters.church') },
+  // { id: 'school', label: t('filters.school') },
 ];
 
 export const FILTER_HEIGHT = 40;
 
-function FilterComponent({ selectedFilter, onFilterChange }: FilterProps) {
+function FilterComponent({ selectedFilter, onFilterChange, buttonStyle = {} }: FilterProps) {
   const handlePress = React.useCallback((optionId: string) => {
     return () => onFilterChange(optionId);
   }, [onFilterChange]);
@@ -69,9 +75,10 @@ function FilterComponent({ selectedFilter, onFilterChange }: FilterProps) {
         {FILTER_OPTIONS.map((option) => (
           <FilterButton
             key={option.id}
-            label={option.label}
+            label={t(option.label)}
             isSelected={selectedFilter === option.id}
             onPress={handlePress(option.id)}
+            buttonStyle={buttonStyle}
           />
         ))}
       </ScrollView>

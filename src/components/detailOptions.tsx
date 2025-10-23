@@ -5,6 +5,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { t } from '../modules/i18n';
 
 type DetailOptionProps = {
   label: string;
@@ -48,17 +49,17 @@ function DetailOptionsComponent({
   return (
     <View style={styles.container}>
       <DetailOption
-        label="Bilgiler"
+        label={t('detail_options.info')}
         onPress={onInfoPress}
         isSelected={selectedOption === 'info'}
       />
       <DetailOption
-        label="Sesli Dinle"
+        label={t('detail_options.audio')}
         onPress={onAudioPress}
         isSelected={selectedOption === 'audio'}
       />
       <DetailOption
-        label="Konum"
+        label={t('detail_options.location')}
         onPress={onLocationPress}
         isSelected={selectedOption === 'location'}
       />

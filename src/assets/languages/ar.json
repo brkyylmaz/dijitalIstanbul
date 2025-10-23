@@ -1,0 +1,100 @@
+{
+    "home": {
+      "greeting": "مرحبًا بك في Dijital İstanbul",
+      "categories": {
+        "mosques": "المساجد",
+        "mausoleums": "الأضرحة",
+        "churches": "الكنائس",
+        "schools": "المدارس"
+      }
+    },
+    "search": {
+      "placeholder": "ابحث",
+      "no_results": "لم يتم العثور على نتائج لـ \"{{searchTerm}}\"",
+      "favorites": "البحث في المفضلة"
+    },
+    "detail": {
+      "loading": "جاري تحميل التفاصيل...",
+      "favorite_add": "أضف إلى المفضلة",
+      "favorite_remove": "إزالة من المفضلة",
+      "map_coming_soon": "سيتم إضافة ميزات الخريطة قريبًا",
+      "mosque": {
+        "built_year": "سنة البناء",
+        "location": "الموقع",
+        "built_by": "أُنشئ بواسطة",
+        "architect": "المهندس المعماري",
+        "changes_after_construction": "التغييرات بعد الإنشاء"
+      },
+      "mausoleum": {
+        "person_in_tomb": "الشخص المدفون",
+        "location": "الموقع",
+        "title": "اللقب",
+        "birth_death": "تاريخ الميلاد/الوفاة",
+        "about_person": "عن الشخص",
+        "built_year": "سنة البناء",
+        "built_by": "أُنشئ بواسطة",
+        "architect": "المهندس المعماري"
+      },
+      "tomb_about": "عن الضريح",
+      "person_life_years": "تاريخ الميلاد/الوفاة:",
+      "person_title": "اللقب:",
+      "person_about": "عن:",
+      "prominent_features": "الميزات البارزة:",
+      "people_in_tomb": "المدفونون"
+    },
+    "components": {
+      "search": {
+        "clear_search": "مسح البحث"
+      },
+      "slider": {
+        "active_mosque_hint": "يعرض المسجد النشط"
+      }
+    },
+    "app": {
+      "subtitle": "Dijital İstanbul"
+    },
+    "qr_scanner": {
+      "checking_permission": "جارٍ التحقق من إذن الكاميرا...",
+      "permission_denied": "لم يتم العثور على إذن الكاميرا. يرجى السماح بذلك في الإعدادات.",
+      "settings_not_opened": "تعذّر فتح الإعدادات",
+      "grant_camera_access": "يرجى منح إذن الكاميرا لمسح رموز QR.",
+      "open_settings": "افتح الإعدادات",
+      "camera_loading": "جارٍ تحميل الكاميرا...",
+      "scan_qr_instruction": "يرجى مسح رمز QR",
+      "redirect_message": "سيتم إرسالُك إلى تفاصيل المسجد المتعلق برمز QR الممسوح.",
+      "processing": "جارٍ المعالجة...",
+      "scan_error_title": "خطأ في المسح",
+      "unexpected_error": "خطأ غير متوقع"
+    },
+    "detail_options": {
+      "info": "معلومات",
+      "audio": "صوت",
+      "location": "الموقع"
+    },
+    "filters": {
+      "mosque": "مسجد",
+      "mausoleum": "ضريح",
+      "church": "كنيسة",
+      "school": "مدرسة"
+    },
+    "audio_player": {
+      "default_title": "ملف صوتي",
+      "error_title": "خطأ",
+      "error_message": "تعذر تحميل الملف الصوتي",
+      "loading": "جارٍ التحميل...",
+      "error_load_failed": "فشل تحميل الملف الصوتي"
+    },
+    "item_box": {
+      "built_year": "سنة البناء",
+      "location": "الموقع"
+    },
+    "navigation": {
+      "language_selection": "اختيار اللغة",
+      "cancel": "إلغاء",
+      "notifications": "الإشعارات",
+      "language_selection_label": "اختيار اللغة",
+      "favorites": "المفضلة",
+      "back": "عودة"
+    }
+  }
+  

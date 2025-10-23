@@ -12,6 +12,9 @@ import {
 } from 'react-native';
 import { Camera, useCameraDevice, useCodeScanner } from 'react-native-vision-camera';
 import { RootStackParamList } from '../navigation/AppNavigator';
+import { resolveQr } from '../store+client/resolve-qr';
+import { store } from '../store+client/store';
+import { t } from '../modules/i18n';
 
 function QRScannerScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
@@ -51,7 +54,6 @@ function QRScannerScreen() {
     }, [])
   );
 
-
   const handleBarCodeScanned = async (code: string) => {
     if (isProcessing) {
       return;
@@ -60,48 +62,28 @@ function QRScannerScreen() {
     setIsProcessing(true);
 
     try {
-      const sourceUrl = code.trim();
-      const encodedUrl = encodeURIComponent(sourceUrl);
-      
-      // 1. ADIM: Önce resolve-qr'den ID'yi al (düz metin olarak geliyor)
-      const resolveResponse = await fetch(
-        `https://cuzdan.basaranamortisor.com/api/resolve-qr?url=${encodedUrl}`,
-      );
+      const trid = await resolveQr(code);
+      const pageIdx = store.pageList.findIndex(x => x.trid == trid);
 
-      if (!resolveResponse.ok) {
-        throw new Error('QR kodu çözümlenemedi');
+      switch (store.pageList[pageIdx].page_type) {
+        case "mosque":
+        case "mausoleum-single":
+          navigation.navigate('MosqueDetail', { postID: store.pageList[pageIdx].id });
+          break;
+        case "mausoleum-multi":
+          navigation.navigate('MultipleTombDetail', { postID: store.pageList[pageIdx].id });
+          break;
       }
 
-      const mosqueId = await resolveResponse.text(); // ID düz metin olarak geliyor
-      
-      if (!mosqueId || mosqueId.trim() === '') {
-        throw new Error('Geçersiz QR kodu');
-      }
-
-      // 2. ADIM: Bu ID ile page-data'dan detaylı veriyi al
-      const dataResponse = await fetch(
-        `https://cuzdan.basaranamortisor.com/api/page-data?id=${mosqueId.trim()}`,
-      );
-
-      if (!dataResponse.ok) {
-        throw new Error('Cami detayları bulunamadı');
-      }
-
-      const mosqueData = await dataResponse.json();
-
-      navigation.navigate('MosqueDetail', {
-        mosqueId: mosqueId.trim(),
-        sourceUrl,
-        mosqueData,
-      });
     } catch (error) {
       Alert.alert(
-        'Tarama Hatası',
-        error instanceof Error ? error.message : 'Beklenmeyen hata',
+        t('qr_scanner.scan_error_title'),
+        error instanceof Error ? error.message : t('qr_scanner.unexpected_error'),
       );
-      setTimeout(() => setIsProcessing(false), 2000);
+    } finally {
+      setIsProcessing(false);
     }
-  };
+  }
 
   const codeScanner = useCodeScanner({
     codeTypes: ['qr', 'ean-13'],
@@ -116,7 +98,7 @@ function QRScannerScreen() {
     return (
       <View style={styles.centeredContainer}>
         <ActivityIndicator size="large" color="#1B4C84" />
-        <Text style={styles.infoText}>Checking camera permission...</Text>
+        <Text style={styles.infoText}>{t('qr_scanner.checking_permission')}</Text>
       </View>
     );
   }
@@ -125,17 +107,17 @@ function QRScannerScreen() {
     return (
       <View style={styles.centeredContainer}>
         <Text style={styles.infoText}>
-          Camera permission not granted. You need to grant camera access in settings to scan QR codes.
+          {t('qr_scanner.permission_denied')}
         </Text>
         <TouchableOpacity
           style={styles.permissionButton}
           onPress={() => {
             Linking.openSettings().catch(() => {
-              Alert.alert('Settings not opened', 'Please grant camera access in settings to scan QR codes.');
+              Alert.alert(t('qr_scanner.settings_not_opened'), t('qr_scanner.grant_camera_access'));
             });
           }}
         >
-          <Text style={styles.permissionButtonText}>Ayarları Aç</Text>
+          <Text style={styles.permissionButtonText}>{t('qr_scanner.open_settings')}</Text>
         </TouchableOpacity>
       </View>
     );
@@ -145,7 +127,7 @@ function QRScannerScreen() {
     return (
       <View style={styles.centeredContainer}>
         <ActivityIndicator size="large" color="#1B4C84" />
-        <Text style={styles.infoText}>Kamera yükleniyor...</Text>
+        <Text style={styles.infoText}>{t('qr_scanner.camera_loading')}</Text>
       </View>
     );
   }
@@ -160,7 +142,7 @@ function QRScannerScreen() {
       />
       <View style={styles.overlay}>
         <View style={styles.topOverlay}>
-          <Text style={styles.helperText}>Lütfen QR kodunu taratın</Text>
+          <Text style={styles.helperText}>{t('qr_scanner.scan_qr_instruction')}</Text>
         </View>
         <View style={styles.middleContainer}>
           <View style={styles.sideOverlay} />
@@ -174,14 +156,14 @@ function QRScannerScreen() {
         </View>
         <View style={styles.bottomOverlay}>
           <Text style={styles.helperText}>
-            You will be redirected to the relevant mosque details after scanning.
+            {t('qr_scanner.redirect_message')}
           </Text>
         </View>
       </View>
       {isProcessing && (
         <View style={styles.processingOverlay}>
           <ActivityIndicator size="large" color="#FFFFFF" />
-          <Text style={styles.processingText}>İşleniyor...</Text>
+          <Text style={styles.processingText}>{t('qr_scanner.processing')}</Text>
         </View>
       )}
     </View>

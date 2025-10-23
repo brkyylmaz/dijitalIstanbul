@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, View, useWindowDimensions, Text, ScrollView, Pressable, Image, Linking } from 'react-native';
+import { StyleSheet, View, useWindowDimensions, Text, ScrollView, Pressable, Image, Linking, Button, Dimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { CompositeNavigationProp } from '@react-navigation/native';
@@ -9,7 +9,9 @@ import SearchInput, { SEARCH_INPUT_HEIGHT } from '../components/searchInput';
 import { getHeaderExtension, HORIZONTAL_SCREEN_PADDING } from '../theme/layout';
 import Slider from '../components/slider';
 import HomeBox from '../components/homeBoxes';
+import HomepageSearchBox from '../components/homepageSearchBox';
 import { RootStackParamList } from '../navigation/AppNavigator';
+import { t } from '../modules/i18n';
 
 type TabParamList = {
   Home: undefined;
@@ -22,21 +24,21 @@ type NavigationProp = CompositeNavigationProp<
   NativeStackNavigationProp<RootStackParamList>
 >;
 
+
+
 const HomeScreen = () => {
   const navigation = useNavigation<NavigationProp>();
   const [searchText, setSearchText] = React.useState('');
   const { height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const headerBaseHeight = getHeaderExtension(height);
-  const headerTotalHeight = headerBaseHeight + insets.top*1.5;
-  const searchOverlapOffset = headerBaseHeight - SEARCH_INPUT_HEIGHT*1.1;
 
   const handleCamilerPress = () => {
     navigation.navigate('CulturalAssets', { filter: 'mosque' });
   };
 
   const handleTurbelerPress = () => {
-    navigation.navigate('CulturalAssets', { filter: 'turbe' });
+    navigation.navigate('CulturalAssets', { filter: 'mausoleum' });
   };
 
   const handleKiliselerPress = () => {
@@ -61,19 +63,21 @@ const HomeScreen = () => {
         style={[
           styles.headerBackground,
           {
-            height: headerTotalHeight,
+            height: headerBaseHeight,
             paddingTop: insets.top,
           },
         ]}
       />
-      <View style={[styles.staticContent, { paddingTop: headerTotalHeight }]}>
-        <Text style={[styles.greetingTitle, { marginTop: -searchOverlapOffset - 30 }]}>Dijital İstanbul'a Hoşgeldin</Text>
-        <View style={[styles.searchRow, { marginTop: 80 }]}>
-          <SearchInput onChangeText={setSearchText} value={searchText} />
+      
+      <View style={[styles.staticContent, { paddingTop: headerBaseHeight }]}>
+        <Text style={[styles.greetingTitle, { marginTop: -headerBaseHeight/2, fontSize: headerBaseHeight/7.6  }]}>{t('home.greeting')}</Text>
+        <View style={[styles.searchRow, { position: 'absolute', top: headerBaseHeight - (SEARCH_INPUT_HEIGHT/2), }]}>
+          <SearchInput onClear={() => setSearchText('')} onChangeText={setSearchText} value={searchText} />
         </View>
+        {searchText.length > 0 && <HomepageSearchBox searchTerm={searchText} navigation={navigation} />}
       </View>
       <ScrollView
-        contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 100 }]}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 100, marginTop: 55 }]}
         showsVerticalScrollIndicator={false}
       >
         <View style={{ marginTop: 0 }}>
@@ -83,7 +87,7 @@ const HomeScreen = () => {
           <View style={styles.boxWrapper}>
             <HomeBox
               icon={require('../assets/images/camiiBlack.png')}
-              title="Camiler"
+              title={t('home.categories.mosques')}
               height={125}
               onPress={handleCamilerPress}
             />
@@ -91,13 +95,13 @@ const HomeScreen = () => {
           <View style={styles.boxWrapper}>
             <HomeBox
               icon={require('../assets/images/turbe.png')}
-              title="Türbeler"
-              height={145}
+              title={t('home.categories.mausoleums')}
+              height={125}
               onPress={handleTurbelerPress}
             />
           </View>
         </View>
-        <View style={styles.boxesRow}>
+        {/* <View style={styles.boxesRow}>
           <View style={styles.boxWrapper}>
             <HomeBox
               icon={require('../assets/images/camiiBlack.png')}
@@ -114,7 +118,7 @@ const HomeScreen = () => {
               onPress={handleOkullarPress}
             />
           </View>
-        </View>
+        </View> */}
         <View style={styles.sponsorsRow}>
           <Pressable onPress={handleValiPress} style={styles.sponsorButton}>
             <Image
@@ -184,6 +188,9 @@ const styles = StyleSheet.create({
     marginBottom: 0,
     zIndex: 10,
     position: 'relative',
+    width: Dimensions.get('window').width,
+    paddingHorizontal: HORIZONTAL_SCREEN_PADDING,
+
   },
   greetingTitle: {
     fontSize: 28,
@@ -207,6 +214,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 12,
     marginTop: 12,
+    marginBottom: 55,
   },
   sponsorButton: {
     flex: 1,

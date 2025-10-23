@@ -1,5 +1,7 @@
+import { Dimensions } from "react-native";
+
 export const getHeaderExtension = (screenHeight: number) =>
-  Math.max(90, Math.min(180, screenHeight * 0.17));
+  screenHeight * 255 / 932;
 
 export const HORIZONTAL_SCREEN_PADDING = 16;
 
@@ -7,3 +9,9 @@ export const HORIZONTAL_SCREEN_PADDING = 16;
 export const HEADER_ICON_BUTTON_HEIGHT = 48;
 export const HEADER_TO_SEARCH_GAP = 12;
 
+export const uiScaleFactor = (()=>{
+  const height = Dimensions.get('window').height;
+  const diff = 1 - (height/874);
+
+  return 1-(diff/2);
+})()

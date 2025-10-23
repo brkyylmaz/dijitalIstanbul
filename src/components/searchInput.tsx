@@ -1,5 +1,6 @@
 import React from 'react';
 import { Image, StyleSheet, TextInput, TouchableOpacity, View, type StyleProp, type ViewStyle } from 'react-native';
+import { t } from '../modules/i18n';
 
 type SearchInputProps = {
   value: string;
@@ -12,7 +13,7 @@ type SearchInputProps = {
 export const SEARCH_INPUT_HEIGHT = 56;
 const SEARCH_INPUT_RADIUS = 20;
 
-function SearchInput({ value, onChangeText, onClear, placeholder = 'Arama yap', style }: SearchInputProps) {
+function SearchInput({ value, onChangeText, onClear, placeholder = t('search.placeholder'), style}: SearchInputProps) {
   return (
     <View style={[styles.container, style]}>
       <View style={styles.iconContainer}>
@@ -23,7 +24,7 @@ function SearchInput({ value, onChangeText, onClear, placeholder = 'Arama yap', 
         />
       </View>
       <TextInput
-        accessibilityLabel="Arama"
+        accessibilityLabel={t('search.placeholder')}
         onChangeText={onChangeText}
         placeholder={placeholder}
         placeholderTextColor="#6B6F76"
@@ -35,7 +36,7 @@ function SearchInput({ value, onChangeText, onClear, placeholder = 'Arama yap', 
         <TouchableOpacity
           style={styles.clearButton}
           onPress={onClear}
-          accessibilityLabel="Aramayı temizle"
+          accessibilityLabel={t('components.search.clear_search')}
         >
           <View style={styles.clearIcon}>
             <View style={[styles.clearLine, styles.clearLine1]} />

@@ -1,4 +1,4 @@
-import React, { useCallback, useLayoutEffect, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Image,
@@ -14,40 +14,14 @@ import { RootStackParamList } from '../navigation/AppNavigator';
 import DetailOptions from '../components/detailOptions';
 import KeyValueItem from '../components/KeyValueItem';
 import AccordionItem from '../components/AccordionItem';
+import AudioPlayer from '../components/AudioPlayer';
+import { useIsFocused } from '@react-navigation/native';
+import { SERV_ADDRESS } from '../store+client/consts';
+import { PageFullInfo } from '../types/fullPage';
+import { t } from '../modules/i18n';
+import { addToFavorites, favoritesStore, removeFromFavorites } from '../store+client/favorites';
+import { useSnapshot } from 'valtio';
 
-// Dummy Türbe Verisi
-// Gerçek implementasyonda bu veriler API'den çekilecek:
-// const PAGE_LIST_API = 'https://cuzdan.basaranamortisor.com/api/page-list';
-const DUMMY_TOMB_DATA = {
-  id: 'laleli-turbe',
-  title: 'III. Mustafa Türbesi',
-  thumbnail_url: 'https://dijitalistanbul.org/wp-content/uploads/2024/08/turbe.png',
-  location: 'Fatih, İstanbul',
-  buildYear: '1774',
-  patron: 'III. Mustafa',
-  architect: 'Mehmed Tahir Ağa',
-  people: [
-    {
-      name: 'III. Mustafa',
-      birth_death: '1717 - 1774',
-      title: '26. Osmanlı Padişahı',
-      about: 'Sultan III. Mustafa, Sultan III. Ahmed\'in oğludur. Uzun yıllar kafeste yaşadıktan sonra 1757\'de tahta çıkmıştır. Sadrazam Koca Ragıp Paşa ile iş birliği içinde reform girişimlerinde bulunmuş, özellikle mali alanda tasarruf politikaları ve yolsuzlukla mücadeleye girişmiştir. Orduyu güçlendirmek için Baron de Tott\'a sürat topçuları birliği kurdurmuş, yeni bir donanma ve askeri okul inşasına öncülük etmiştir. Saltanatının son dönemine 1768–1774 Osmanlı-Rus Savaşı damga vurmuş, bu savaş sürerken vefat etmiştir. Kendi yaptırdığı Laleli Külliyesi\'ndeki türbeye defnedilmiştir.'
-    },
-    {
-      name: 'III. Selim',
-      birth_death: '1761 - 1808',
-      title: '28. Osmanlı Padişahı',
-      about: 'III. Mustafa\'nın oğlu olan III. Selim, tahta çıktıktan sonra Batı\'yı yakından izleyerek Nizâm-ı Cedîd adlı kapsamlı askerî ve idarî reform programını başlattı; Avrupa tarzı talimli yeni birlikler kurdu, uluslararası elçilikleri daimi temsilciliklere dönüştürdü, Mühendishâne-i Berrî-i Hümâyun\'u açarak modern subay yetiştirdi. Mali yapıyı güçlendirmek için \'îrâd-ı cedîd\' hazinesini tesis etti; iç ve dış borçları denetlemeye çalıştı. Fransız Devrimi sonrasında Akka savunmasıyla Napolyon\'u durdurdu, Avusturya ve Rusya ile iki cepheli savaşları Yaş Antlaşması (1792) ve 1807 ateşkesi ile sonlandırdı. Yenilikleri yeniçeri ve ulemâ muhalefetiyle karşılaşınca Kabakçı Mustafa İsyanı patlak verdi; 29 Mayıs 1807\'de tahttan indirildi, Alemdar Mustafa Paşa\'nın girişimine rağmen saray darbesi sırasında öldürülerek babası III. Mustafa\'nın türbesine gömüldü. III. Selim, klasik mûsikiye kazandırdığı besteler, diplomasi ağı ve Nizâm-ı Cedîd\'le Osmanlı modernleşmesinin öncüsü olarak anılır.'
-    }
-  ],
-  features: [
-    'Türbe, Laleli Külliyesi\'nin güneybatısında, cami ile han yapısı arasında yer alır.',
-    'Mermer kaplı, ongen planlı ve tek kubbelidir. Barok etkili Osmanlı mimarisi; Batı etkilerinin görüldüğü ikinci sultan türbesidir (ilki Nuruosmaniye Türbesi).',
-    'Girişte üç gözlü revak bulunur. Giriş kapısında ve avlu girişinde Mehmet Vasfi Efendi\'nin yazdığı Fecr, Ankebut ve Haşr sûrelerinden ayetler celi-sülüs hatla yer alır. İç mekânda XVI. yüzyıldan kalma, mercan kırmızısı, mavi ve beyaz İznik çinileri pencere aralarına yerleştirilmiştir. Zümer, Saffat ve Zümer sûrelerinden ayetler çini kuşak halinde duvarları dolanmaktadır.',
-    'Güney cephede üç adet basık kemerli pencere bulunur; pencere köşelikleri mermer kabartma çiçek ve yaprak motifleriyle bezelidir.',
-    'Türbede Sultan III. Mustafa ve oğlu Sultan III. Selim\'in sandukaları sedef kakmalı ahşap korkuluklarla çevrilidir.'
-  ]
-};
 
 type Props = NativeStackScreenProps<RootStackParamList, 'MultipleTombDetail'>;
 
@@ -62,7 +36,7 @@ const FavoriteHeader: React.FC<FavoriteHeaderProps> = ({ isFavorite, onToggle })
       styles.iconButton,
       { backgroundColor: '#D9DDE08C' }
     ]}
-    accessibilityLabel={isFavorite ? "Favorilerden çıkar" : "Favorilere ekle"}
+    accessibilityLabel={isFavorite ? t('detail.favorite_remove') : t('detail.favorite_add')}
     activeOpacity={0.7}
     onPress={onToggle}
   >
@@ -76,41 +50,56 @@ const FavoriteHeader: React.FC<FavoriteHeaderProps> = ({ isFavorite, onToggle })
   </TouchableOpacity>
 );
 
-function MultipleTombDetailScreen({ navigation }: Props) {
+function MultipleTombDetailScreen({ navigation, route }: Props) {
+  const { postID } = route.params;
   const { width } = useWindowDimensions();
-  
-  // Dummy data'yı kullan
-  const [tombInfo] = useState(DUMMY_TOMB_DATA);
-  const [imageUrl] = useState<string | undefined>(DUMMY_TOMB_DATA.thumbnail_url);
-  const [tombTitle] = useState<string>(DUMMY_TOMB_DATA.title);
-  const [isLoading] = useState(false);
-  const [errorMessage] = useState<string | null>(null);
-  const [isFavorite, setIsFavorite] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [selectedOption, setSelectedOption] = useState<'info' | 'audio' | 'location'>('info');
+  const [pageData, setPageData] = useState<PageFullInfo | null>(null);
+  const f = useIsFocused();
+  const favSnap = useSnapshot(favoritesStore);
 
-  const toggleFavorite = useCallback(() => {
-    setIsFavorite(!isFavorite);
-  }, [isFavorite]);
+  const toggleFavorite = ()=>{
+    if (favSnap.favorites.includes(postID)){
+      removeFromFavorites(postID);
+    } else {
+      addToFavorites(postID);
+    }
+  }
 
   useLayoutEffect(() => {
     navigation.setOptions({
       headerRight: () => (
         <FavoriteHeader 
-          isFavorite={isFavorite} 
+          isFavorite={favSnap.favorites.includes(postID)} 
           onToggle={toggleFavorite} 
         />
       ),
     });
-  }, [navigation, isFavorite, toggleFavorite]);
+  }, [navigation, favSnap.favorites.includes(postID), toggleFavorite]);
 
-  // Dummy data kullanıldığı için API çağrısı yok
-  // Gerçek implementasyonda burası API'den veri çekecek
+  useEffect(()=>{
+    if (!f){return}
+
+    (async ()=>{
+
+      await fetch(SERV_ADDRESS+"/pages/"+postID)
+        .then(x => x.json())
+        .then(setPageData)
+        .catch(err => setErrorMessage(err.toString()));
+
+      setIsLoading(false);
+    })()
+
+
+  }, [f]);
 
   if (isLoading) {
     return (
       <View style={styles.centeredContainer}>
         <ActivityIndicator size="large" color="#1B4C84" />
-        <Text style={styles.helperText}>Detaylar yükleniyor...</Text>
+        <Text style={styles.helperText}>{t('detail.loading')}</Text>
       </View>
     );
   }
@@ -128,18 +117,12 @@ function MultipleTombDetailScreen({ navigation }: Props) {
       contentContainerStyle={styles.scrollContentNew} 
       style={styles.container}
     >
-      {imageUrl ? (
-        <View style={[styles.imageContainer, { height: Math.max(460, width * 0.6) }]}>
-          <Image resizeMode="cover" source={{ uri: imageUrl }} style={styles.coverImageNew} />
-          <View style={styles.titleOverlay}>
-            <Text style={styles.titleNew}>{tombTitle}</Text>
-          </View>
+      <View style={[styles.imageContainer, { height: Math.max(460, width * 0.6) }]}>
+        <Image resizeMode="cover" source={{ uri: pageData?.thumbnail_url }} style={styles.coverImageNew} />
+        <View style={styles.titleOverlay}>
+          <Text style={styles.titleNew}>{pageData?.title}</Text>
         </View>
-      ) : (
-        <View style={styles.content}>
-          <Text style={styles.title}>{tombTitle}</Text>
-        </View>
-      )}
+      </View>
 
       <View style={styles.contentCompact}>
         <DetailOptions
@@ -155,20 +138,20 @@ function MultipleTombDetailScreen({ navigation }: Props) {
           <View style={styles.infoContainer}>
             {/* Türbedeki Kişiler - Accordion */}
             <View style={styles.sectionContainer}>
-              <Text style={styles.sectionTitle}>Türbedeki Kişiler</Text>
+              <Text style={styles.sectionTitle}>{t('detail.people_in_tomb')}</Text>
               
-              {tombInfo.people.map((person, index) => (
+              {pageData?.contains?.map((person, index) => (
                 <AccordionItem key={index} title={person.name} isInitiallyOpen={false}>
                   <KeyValueItem 
-                    label="Doğumu/Ölümü:"
-                    value={person.birth_death}
+                    label={t('detail.person_life_years')}
+                    value={person.life_years}
                   />
                   <KeyValueItem 
-                    label="Ünvanı:"
+                    label={t('detail.person_title')}
                     value={person.title}
                   />
                   <KeyValueItem 
-                    label="Hakkında:"
+                    label={t('detail.person_about')}
                     value={person.about}
                   />
                 </AccordionItem>
@@ -177,45 +160,47 @@ function MultipleTombDetailScreen({ navigation }: Props) {
 
             {/* Türbe Hakkında */}
             <View style={styles.sectionContainer}>
-              <Text style={styles.sectionTitle}>Türbe Hakkında</Text>
+              <Text style={styles.sectionTitle}>{t('detail.tomb_about')}</Text>
               
               <View style={styles.tombInfoCards}>
                 {/* Konumu */}
                 <View style={styles.infoCardFull}>
-                  <Text style={styles.infoCardLabel}>Konumu</Text>
-                  <Text style={styles.infoCardValue}>{tombInfo.location}</Text>
+                  <Text style={styles.infoCardLabel}>{t('detail.mosque.location')}</Text>
+                  <Text style={styles.infoCardValue}>{pageData?.location_str}</Text>
                 </View>
 
                 <View style={styles.infoRow}>
                   <View style={styles.infoCard}>
-                    <Text style={styles.infoCardLabel}>Yapım Yılı</Text>
-                    <Text style={styles.infoCardValue}>{tombInfo.buildYear}</Text>
+                    <Text style={styles.infoCardLabel}>{t('detail.mausoleum.built_year')}</Text>
+                    <Text style={styles.infoCardValue}>{pageData?.built_at}</Text>
                   </View>
                   <View style={styles.infoCard}>
-                    <Text style={styles.infoCardLabel}>Kim Yaptırdı</Text>
-                    <Text style={styles.infoCardValue}>{tombInfo.patron}</Text>
+                    <Text style={styles.infoCardLabel}>{t('detail.mausoleum.built_by')}</Text>
+                    <Text style={styles.infoCardValue}>{pageData?.built_by}</Text>
                   </View>
                 </View>
 
                 <View style={styles.infoCardFull}>
-                  <Text style={styles.infoCardLabel}>Mimarı</Text>
-                  <Text style={styles.infoCardValue}>{tombInfo.architect}</Text>
+                  <Text style={styles.infoCardLabel}>{t('detail.mausoleum.architect')}</Text>
+                  <Text style={styles.infoCardValue}>{pageData?.architect}</Text>
                 </View>
 
                 <KeyValueItem 
-                  label="Öne Çıkan Özellikleri:"
-                  value={tombInfo.features}
+                  label={t('detail.prominent_features')}
+                  value={pageData?.properties || []}
                 />
               </View>
             </View>
           </View>
         ) : selectedOption === 'audio' ? (
-          <View style={styles.infoBlock}>
-            <Text style={styles.placeholderText}>Ses rehberi yakında eklenecek</Text>
-          </View>
+          <AudioPlayer 
+            audioUrl={`https://dijitalistanbul.org/dijitalistanbulaudio/${postID}.mp3`}
+            title={pageData?.title}
+            subtitle={t('app.subtitle')}
+          />
         ) : selectedOption === 'location' ? (
           <View style={styles.infoBlock}>
-            <Text style={styles.placeholderText}>Harita özellikleri yakında eklenecek</Text>
+            <Text style={styles.placeholderText}>{t('detail.map_coming_soon')}</Text>
           </View>
         ) : null}
       </View>

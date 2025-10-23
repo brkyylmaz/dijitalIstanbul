@@ -11,43 +11,12 @@ import {
   View,
   useWindowDimensions,
 } from 'react-native';
+import { t } from '../modules/i18n';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/AppNavigator';
 import { HORIZONTAL_SCREEN_PADDING } from '../theme/layout';
-
-const FEATURED_MOSQUES = [
-  {
-    id: 'suleymaniye',
-    numericId: null, // Bu ID'ler API'den dinamik olarak çekilecek
-    title: 'Süleymaniye Camii',
-    image: 'https://dijitalistanbul.org/wp-content/uploads/2024/11/suleymaniye_camii.png',
-  },
-  {
-    id: 'sultanahmet',
-    numericId: null,
-    title: 'Sultanahmet Camii',
-    image: 'https://dijitalistanbul.org/wp-content/uploads/2024/08/924d05ffde.jpg',
-  },
-  {
-    id: 'eyupsultan',
-    numericId: null,
-    title: 'Eyüp Sultan Camii',
-    image: 'https://dijitalistanbul.org/wp-content/uploads/2024/08/eyupcamii-1.jpg',
-  },
-  {
-    id: 'nuruosmaniye',
-    numericId: null,
-    title: 'Nuruosmaniye Camii',
-    image: 'https://dijitalistanbul.org/wp-content/uploads/2024/11/nuruosmaniye_camii.jpg',
-  },
-  {
-    id: 'fatih',
-    numericId: null,
-    title: 'Fatih Camii',
-    image: 'https://dijitalistanbul.org/wp-content/uploads/2024/08/fatihcamii2.jpg',
-  },
-];
+import { PageListItem, store } from '../store+client/store';
 
 const SLIDE_HEIGHT = 300;
 const DOT_SIZE = 10;
@@ -60,79 +29,33 @@ const Slider = () => {
   const { width } = useWindowDimensions();
   const slideWidth = Math.max(0, width - HORIZONTAL_SCREEN_PADDING * 2);
   const [activeIndex, setActiveIndex] = React.useState(0);
-  const [mosqueIds, setMosqueIds] = React.useState<{[key: string]: number}>({});
   const flatListRef = React.useRef<FlatList>(null);
 
-  // Cami ID'lerini API'den çek
-  React.useEffect(() => {
-    const fetchMosqueIds = async () => {
-      try {
-        const response = await fetch('https://cuzdan.basaranamortisor.com/api/page-list');
-        if (response.ok) {
-          const mosques = await response.json();
-          const idMapping: {[key: string]: number} = {};
-          
-          FEATURED_MOSQUES.forEach(featuredMosque => {
-            const match = mosques.find((mosque: any) => 
-              mosque.title && featuredMosque.title &&
-              mosque.title.toLowerCase().includes(featuredMosque.title.toLowerCase().replace(' Camii', ''))
-            );
-            if (match) {
-              idMapping[featuredMosque.id] = match.id;
-            }
-          });
-          
-          setMosqueIds(idMapping);
-        }
-      } catch (error) {
-        console.warn('Cami ID\'leri alınamadı:', error);
+  const featuredMosques = (()=>{
+    const ids: Record<number, number> = {};
+    let cnt = 0;
+
+    for (let i=0; i<store.pageList.length && cnt < store.appAttributes.highlighted.length; i++){
+      if (store.appAttributes.highlighted.includes(store.pageList[i].trid)){
+        ids[store.pageList[i].trid] = i;
+        cnt++
       }
-    };
-
-    fetchMosqueIds();
-  }, []);
-
-  const handleMosquePress = React.useCallback(async (mosque: typeof FEATURED_MOSQUES[number]) => {
-    const numericId = mosqueIds[mosque.id];
-    
-    if (!numericId) {
-      console.warn('Cami ID\'si bulunamadı:', mosque.id);
-      return;
     }
 
-    try {
-      // Cami detaylarını API'den çek
-      const response = await fetch(
-        `https://cuzdan.basaranamortisor.com/api/page-data?id=${numericId}`
-      );
+    return store.appAttributes.highlighted.map(trid => store.pageList[ids[trid]]);
+  })()
 
-      if (!response.ok) {
-        throw new Error('Cami detayları yüklenemedi');
-      }
-
-      const mosqueData = await response.json();
-
-      navigation.navigate('MosqueDetail', {
-        mosqueId: numericId.toString(),
-        mosqueData,
-        sourceUrl: `https://qr.dijitalistanbul.org/u/${numericId}`
-      });
-    } catch (error) {
-      console.error('Cami detayları yüklenirken hata:', error);
-      // Hata durumunda da navigasyonu yap ama data olmadan
-      navigation.navigate('MosqueDetail', {
-        mosqueId: numericId.toString(),
-        mosqueData: null,
-        sourceUrl: `https://qr.dijitalistanbul.org/u/${numericId}`
-      });
-    }
-  }, [mosqueIds, navigation]);
+  const handleMosquePress = (item: PageListItem)=>{
+    navigation.navigate('MosqueDetail', {
+      postID: item.id
+    });
+  }
 
   const handleScroll = React.useCallback(
     (event: NativeSyntheticEvent<NativeScrollEvent>) => {
       const offsetX = event.nativeEvent.contentOffset.x;
       const index = Math.round(offsetX / slideWidth);
-      if (!Number.isNaN(index) && index !== activeIndex && index >= 0 && index < FEATURED_MOSQUES.length) {
+      if (!Number.isNaN(index) && index !== activeIndex && index >= 0 && index < featuredMosques.length) {
         setActiveIndex(index);
       }
     },
@@ -141,7 +64,7 @@ const Slider = () => {
 
   const scrollToIndex = React.useCallback(
     (index: number) => {
-      if (index >= 0 && index < FEATURED_MOSQUES.length && flatListRef.current) {
+      if (index >= 0 && index < featuredMosques.length && flatListRef.current) {
         flatListRef.current.scrollToIndex({ index, animated: true });
         setActiveIndex(index);
       }
@@ -150,7 +73,7 @@ const Slider = () => {
   );
 
   const renderItem = React.useCallback(
-    ({ item }: { item: (typeof FEATURED_MOSQUES)[number] }) => (
+    ({ item }: { item: PageListItem }) => (
       <View style={[styles.slideItem, { width: slideWidth }]}>
         <TouchableOpacity 
           style={styles.slideTouch}
@@ -158,7 +81,7 @@ const Slider = () => {
           activeOpacity={0.9}
         >
           <ImageBackground
-            source={{ uri: item.image }}
+            source={{ uri: item.thumbnail_url }}
             style={styles.slideImage}
           >
             <View style={styles.overlay} />
@@ -170,10 +93,10 @@ const Slider = () => {
                 style={styles.dotsContainer}
                 accessible
                 accessibilityRole="adjustable"
-                accessibilityLabel={`Slider göstergesi, ${FEATURED_MOSQUES.length} öğe`}
-                accessibilityHint="Aktif camiyi gösterir"
+                accessibilityLabel={`Slider göstergesi, ${featuredMosques.length} öğe`}
+                accessibilityHint={t('components.slider.active_mosque_hint')}
               >
-                {FEATURED_MOSQUES.map((mosque, dotIndex) => {
+                {featuredMosques.map((mosque, dotIndex) => {
                   const isActive = dotIndex === activeIndex;
                   return (
                     <Pressable
@@ -195,17 +118,15 @@ const Slider = () => {
     [activeIndex, slideWidth, scrollToIndex, handleMosquePress],
   );
 
-  const keyExtractor = React.useCallback((item: (typeof FEATURED_MOSQUES)[number]) => item.id, []);
-
   return (
     <View style={styles.sliderShell}>
       <View style={[styles.slideFrame, { width: slideWidth, height: SLIDE_HEIGHT }]}>
         <FlatList
           ref={flatListRef}
-          data={FEATURED_MOSQUES}
+          data={featuredMosques}
           horizontal
           pagingEnabled
-          keyExtractor={keyExtractor}
+          keyExtractor={(item: PageListItem) => item.id.toString()}
           renderItem={renderItem}
           showsHorizontalScrollIndicator={false}
           onScroll={handleScroll}

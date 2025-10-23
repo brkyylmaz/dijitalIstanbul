@@ -1,0 +1,99 @@
+{
+  "home": {
+    "greeting": "Dijital İstanbul'a Hoşgeldin",
+    "categories": {
+      "mosques": "Camiler",
+      "mausoleums": "Türbeler",
+      "churches": "Kiliseler",
+      "schools": "Okullar"
+    }
+  },
+  "search": {
+    "placeholder": "Arama yap",
+    "no_results": "\"{{searchTerm}}\" ile sonuç bulunamadı",
+    "favorites": "Favorilerimde Ara"
+  },
+  "detail": {
+    "loading": "Detaylar yüklenyor...",
+    "favorite_add": "Favorilere ekle",
+    "favorite_remove": "Favorilerden çıkar",
+    "map_coming_soon": "Harita özellikleri yakında eklenecek",
+    "mosque": {
+      "built_year": "Yapım",
+      "location": "Konumu",
+      "built_by": "Kim Yaptırdı",
+      "architect": "Mimarı",
+      "changes_after_construction": "Yapımından Sonraki Değişiklikler"
+    },
+    "mausoleum": {
+      "person_in_tomb": "Türbedeki Kişi",
+      "location": "Konumu",
+      "title": "Ünvanı",
+      "birth_death": "Doğum/Ölüm",
+      "about_person": "Kişi Hakkında",
+      "built_year": "Yapım Yılı",
+      "built_by": "Kim Yaptırdı",
+      "architect": "Mimarı"
+    },
+    "tomb_about": "Türbe Hakkında",
+    "person_life_years": "Doğum/Ölüm:",
+    "person_title": "Ünvanı:",
+    "person_about": "Hakkında:",
+    "prominent_features": "Öne Çıkan Özellikleri:",
+    "people_in_tomb": "Türbedeki Kişiler"
+  },
+  "components": {
+    "search": {
+      "clear_search": "Aramayı temizle"
+    },
+    "slider": {
+      "active_mosque_hint": "Aktif camiyi gösterir"
+    }
+  },
+  "app": {
+    "subtitle": "Dijital İstanbul"
+  },
+  "qr_scanner": {
+    "checking_permission": "Kamera izni kontrol ediliyor...",
+    "permission_denied": "Kamera izni bulunamadı. Ayarlardan kamera izni veriniz.",
+    "settings_not_opened": "Ayarlar açılamadı",
+    "grant_camera_access": "QR kodlarını tarayabilmek için kamera izni veriniz.",
+    "open_settings": "Ayarları Aç",
+    "camera_loading": "Kamera yükleniyor...",
+    "scan_qr_instruction": "Lütfen QR kodunu taratın",
+    "redirect_message": "Taradığınız QR kodu ile ilgili cami detaylarına yönlendirileceksiniz.",
+    "processing": "İşleniyor...",
+    "scan_error_title": "Tarama Hatası",
+    "unexpected_error": "Beklenmeyen hata"
+  },
+  "detail_options": {
+    "info": "Bilgiler",
+    "audio": "Sesli Dinle",
+    "location": "Konum"
+  },
+  "filters": {
+    "mosque": "Camii",
+    "mausoleum": "Türbe",
+    "church": "Kilise",
+    "school": "Okul"
+  },
+  "audio_player": {
+    "default_title": "Ses Dosyası",
+    "error_title": "Hata",
+    "error_message": "Ses dosyası yüklenemedi",
+    "loading": "Yükleniyor...",
+    "error_load_failed": "Ses dosyası yüklenemedi"
+  },
+  "item_box": {
+    "built_year": "Yapım",
+    "location": "Konum"
+  },
+  "navigation": {
+    "language_selection": "Dil Seçimi",
+    "cancel": "İptal",
+    "notifications": "Bildirimler",
+    "language_selection_label": "Dil Seçimi",
+    "favorites": "Favoriler",
+    "back": "Geri"
+  }
+}

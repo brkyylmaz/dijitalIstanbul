@@ -6,27 +6,23 @@ type TabItem = {
   name: string;
   route: string;
   icon: any;
-  iconWhite: any;
 };
 
 const tabs: TabItem[] = [
   {
     name: 'Home',
     route: 'Home',
-    icon: require('../assets/images/homeIcon.png'),
-    iconWhite: require('../assets/images/homeIconWhite.png'),
+    icon: require('../assets/images/homeIconWhite.png'),
   },
   {
     name: 'QR',
     route: 'QR',
-    icon: require('../assets/images/qrIcon.png'),
-    iconWhite: require('../assets/images/qrIconWhite.png'),
+    icon: require('../assets/images/qrIconWhite.png'),
   },
   {
     name: 'CulturalAssets',
     route: 'CulturalAssets',
-    icon: require('../assets/images/camiIcon.png'),
-    iconWhite: require('../assets/images/camiIconWhite.png'),
+    icon: require('../assets/images/camiIconWhite.png'),
   },
 ];
 
@@ -58,6 +54,10 @@ const CustomTabBarComponent = React.memo(function CustomTabBar({ state, navigati
     return tab || tabs[0];
   }, []);
 
+  const getIconTintColor = React.useCallback((isFocused: boolean) => {
+    return isFocused ? '#FFFFFF' : '#A8A8A8';
+  }, []);
+
   return (
     <View style={styles.outerContainer}>
       <View style={styles.tabBarContainer}>
@@ -79,8 +79,11 @@ const CustomTabBarComponent = React.memo(function CustomTabBar({ state, navigati
             >
               <Image
                 resizeMode="contain"
-                source={isFocused ? tab.iconWhite : tab.icon}
-                style={isQR ? styles.iconQr : styles.iconSmall}
+                source={tab.icon}
+                style={[
+                  isQR ? styles.iconQr : styles.iconSmall,
+                  { tintColor: getIconTintColor(isFocused) }
+                ]}
               />
             </Pressable>
           );

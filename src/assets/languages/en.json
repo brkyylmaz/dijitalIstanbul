@@ -1,0 +1,99 @@
+{
+  "home": {
+    "greeting": "Welcome to Dijital İstanbul",
+    "categories": {
+      "mosques": "Mosques",
+      "mausoleums": "Mausoleums",
+      "churches": "Churches",
+      "schools": "Schools"
+    }
+  },
+  "search": {
+    "placeholder": "Search",
+    "no_results": "No results found with \"{{searchTerm}}\"",
+    "favorites": "Search in favorites"
+  },
+  "detail": {
+    "loading": "Details are loading...",
+    "favorite_add": "Add to favorites",
+    "favorite_remove": "Remove from favorites",
+    "map_coming_soon": "Map features will be added soon",
+    "mosque": {
+      "built_year": "Construction",
+      "location": "Location",
+      "built_by": "Commissioned by",
+      "architect": "Architect",
+      "changes_after_construction": "Changes after construction"
+    },
+    "mausoleum": {
+      "person_in_tomb": "Entombed",
+      "location": "Location",
+      "title": "Title",
+      "birth_death": "Birth/Death",
+      "about_person": "About Person",
+      "built_year": "Year Built",
+      "built_by": "Commissioned by",
+      "architect": "Architect"
+    },
+    "tomb_about": "About the Mausoleum",
+    "person_life_years": "Birth/Death:",
+    "person_title": "Title:",
+    "person_about": "About:",
+    "prominent_features": "Prominent Features:",
+    "people_in_tomb": "Entombed"
+  },
+  "components": {
+    "search": {
+      "clear_search": "Clear search"
+    },
+    "slider": {
+      "active_mosque_hint": "Shows the active mosque"
+    }
+  },
+  "app": {
+    "subtitle": "Dijital İstanbul"
+  },
+  "qr_scanner": {
+    "checking_permission": "Checking camera permission...",
+    "permission_denied": "Camera permission not found. Please allow camera permission in settings.",
+    "settings_not_opened": "Settings could not be opened",
+    "grant_camera_access": "Please grant camera access to scan QR codes.",
+    "open_settings": "Open Settings",
+    "camera_loading": "Camera is loading...",
+    "scan_qr_instruction": "Please scan the QR code",
+    "redirect_message": "You will be redirected to mosque details related to the scanned QR code.",
+    "processing": "Processing...",
+    "scan_error_title": "Scan Error",
+    "unexpected_error": "Unexpected error"
+  },
+  "detail_options": {
+    "info": "Information",
+    "audio": "Audio",
+    "location": "Location"
+  },
+  "filters": {
+    "mosque": "Mosque",
+    "mausoleum": "Mausoleum",
+    "church": "Church",
+    "school": "School"
+  },
+  "audio_player": {
+    "default_title": "Audio File",
+    "error_title": "Error",
+    "error_message": "Audio file could not be loaded",
+    "loading": "Loading...",
+    "error_load_failed": "Failed to load audio file"
+  },
+  "item_box": {
+    "built_year": "Construction",
+    "location": "Location"
+  },
+  "navigation": {
+    "language_selection": "Language Selection",
+    "cancel": "Cancel",
+    "notifications": "Notifications",
+    "language_selection_label": "Language Selection",
+    "favorites": "Favorites",
+    "back": "Back"
+  }
+}
