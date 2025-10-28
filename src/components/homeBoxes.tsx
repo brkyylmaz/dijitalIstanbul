@@ -1,5 +1,6 @@
 import React from 'react';
 import { Image, StyleSheet, Text, TouchableOpacity, type ImageSourcePropType } from 'react-native';
+import { isRtl } from '../modules/i18n';
 
 type HomeBoxProps = {
   icon: ImageSourcePropType;
@@ -9,6 +10,8 @@ type HomeBoxProps = {
 };
 
 const HomeBox = ({ icon, title, height, onPress }: HomeBoxProps) => {
+  const isRTL = isRtl();
+  
   return (
     <TouchableOpacity
       style={[styles.container, { height }]}
@@ -17,8 +20,8 @@ const HomeBox = ({ icon, title, height, onPress }: HomeBoxProps) => {
       accessibilityRole="button"
       accessibilityLabel={title}
     >
-      <Image source={icon} style={styles.icon} resizeMode="contain" />
-      <Text style={styles.title} numberOfLines={2}>
+      <Image source={icon} style={[styles.icon, isRTL && styles.iconRTL]} resizeMode="contain" />
+      <Text style={[styles.title, isRTL && styles.titleRTL]} numberOfLines={2}>
         {title}
       </Text>
     </TouchableOpacity>
@@ -48,6 +51,17 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#0F172A',
     alignSelf: 'flex-start',
+    textAlign: 'left',
+  },
+  
+  // RTL (Arapça) Stilleri
+  iconRTL: {
+    alignSelf: 'flex-end',
+  },
+  titleRTL: {
+    alignSelf: 'flex-end',
+    textAlign: 'right',
+    writingDirection: 'rtl',
   },
 });
 

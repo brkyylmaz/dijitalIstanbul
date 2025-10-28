@@ -27,11 +27,11 @@ const lang_list: LangList = [
   {
     flag: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b4/Flag_of_Turkey.svg/80px-Flag_of_Turkey.svg.png",
     code: "tr",
-    display_name: "Turkce",
+    display_name: "Türkçe",
     translation: tr_trans
   },
   {
-    flag: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a9/Flag_of_the_United_States_%28DoS_ECA_Color_Standard%29.svg/84px-Flag_of_the_United_States_%28DoS_ECA_Color_Standard%29.svg.png",
+    flag: "https://upload.wikimedia.org/wikipedia/en/thumb/a/ae/Flag_of_the_United_Kingdom.svg/80px-Flag_of_the_United_Kingdom.svg.png",
     code: "en",
     display_name: "English",
     translation: en_trans
@@ -80,6 +80,11 @@ const change_lang = async (lang_code: string = default_lang): Promise<void> => {
   }
 
   await i18n.changeLanguage(lang_code);
+  
+  // RTL kontrolü
+  const currentLang = lang_list.find(l => l.code === lang_code);
+  const isRtlActive = currentLang?.rtl ?? false;
+  console.log(`🌐 Dil değiştirildi: ${lang_code} | RTL: ${isRtlActive ? '✅ AÇIK (Sağdan Sola)' : '❌ KAPALI (Soldan Sağa)'}`);
 
   if (__DEV__) {
     NativeModules.DevSettings.reload();
@@ -117,6 +122,8 @@ const t = i18n.t;
     resources: resources
   };
 
+  
+
   i18n
     .use(initReactI18next) // Initializes react-i18next
     .init(i18nOptions, (e) => {
@@ -125,8 +132,23 @@ const t = i18n.t;
         return;
       }
       console.log("i18n init");
+      
+      // Başlangıç dili ve RTL durumu
+      const currentLang = lang_list.find(l => l.code === start_lang);
+      const isRtlActive = currentLang?.rtl ?? false;
+      console.log(`\n🌐 ====================================`);
+      console.log(`📱 Aktif Dil: ${start_lang.toUpperCase()} (${currentLang?.display_name})`);
+      console.log(`🔄 RTL Modu: ${isRtlActive ? '✅ AÇIK (Sağdan Sola - Arapça)' : '❌ KAPALI (Soldan Sağa)'}`);
+      console.log(`🌐 ====================================\n`);
     });
 })();
+
+export const isRtl = (): boolean => {
+  const currentLang = lang_list.find(l => l.code === i18n.language);
+  const rtlValue = currentLang?.rtl ?? false;
+  console.log(`🔍 isRtl() çağrıldı | Dil: ${i18n.language} | RTL: ${rtlValue ? '✅ true' : '❌ false'}`);
+  return rtlValue;
+};
 
 export default i18n;
 export {

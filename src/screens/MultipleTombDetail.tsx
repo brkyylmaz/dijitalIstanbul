@@ -18,7 +18,7 @@ import AudioPlayer from '../components/AudioPlayer';
 import { useIsFocused } from '@react-navigation/native';
 import { SERV_ADDRESS } from '../store+client/consts';
 import { PageFullInfo } from '../types/fullPage';
-import { t } from '../modules/i18n';
+import { t, isRtl } from '../modules/i18n';
 import { addToFavorites, favoritesStore, removeFromFavorites } from '../store+client/favorites';
 import { useSnapshot } from 'valtio';
 
@@ -59,6 +59,7 @@ function MultipleTombDetailScreen({ navigation, route }: Props) {
   const [pageData, setPageData] = useState<PageFullInfo | null>(null);
   const f = useIsFocused();
   const favSnap = useSnapshot(favoritesStore);
+  const rtl = isRtl();
 
   const toggleFavorite = ()=>{
     if (favSnap.favorites.includes(postID)){
@@ -120,7 +121,7 @@ function MultipleTombDetailScreen({ navigation, route }: Props) {
       <View style={[styles.imageContainer, { height: Math.max(460, width * 0.6) }]}>
         <Image resizeMode="cover" source={{ uri: pageData?.thumbnail_url }} style={styles.coverImageNew} />
         <View style={styles.titleOverlay}>
-          <Text style={styles.titleNew}>{pageData?.title}</Text>
+          <Text style={[styles.titleNew, rtl && styles.titleNewRtl]}>{pageData?.title}</Text>
         </View>
       </View>
 
@@ -138,7 +139,7 @@ function MultipleTombDetailScreen({ navigation, route }: Props) {
           <View style={styles.infoContainer}>
             {/* Türbedeki Kişiler - Accordion */}
             <View style={styles.sectionContainer}>
-              <Text style={styles.sectionTitle}>{t('detail.people_in_tomb')}</Text>
+              <Text style={[styles.sectionTitle, rtl && styles.sectionTitleRtl]}>{t('detail.people_in_tomb')}</Text>
               
               {pageData?.contains?.map((person, index) => (
                 <AccordionItem key={index} title={person.name} isInitiallyOpen={false}>
@@ -160,29 +161,29 @@ function MultipleTombDetailScreen({ navigation, route }: Props) {
 
             {/* Türbe Hakkında */}
             <View style={styles.sectionContainer}>
-              <Text style={styles.sectionTitle}>{t('detail.tomb_about')}</Text>
+              <Text style={[styles.sectionTitle, rtl && styles.sectionTitleRtl]}>{t('detail.tomb_about')}</Text>
               
               <View style={styles.tombInfoCards}>
                 {/* Konumu */}
                 <View style={styles.infoCardFull}>
-                  <Text style={styles.infoCardLabel}>{t('detail.mosque.location')}</Text>
-                  <Text style={styles.infoCardValue}>{pageData?.location_str}</Text>
+                  <Text style={[styles.infoCardLabel, rtl && styles.infoTextRtl]}>{t('detail.mosque.location')}</Text>
+                  <Text style={[styles.infoCardValue, rtl && styles.infoTextRtl]}>{pageData?.location_str}</Text>
                 </View>
 
-                <View style={styles.infoRow}>
+                <View style={[styles.infoRow, rtl && styles.infoRowRtl]}>
                   <View style={styles.infoCard}>
-                    <Text style={styles.infoCardLabel}>{t('detail.mausoleum.built_year')}</Text>
-                    <Text style={styles.infoCardValue}>{pageData?.built_at}</Text>
+                    <Text style={[styles.infoCardLabel, rtl && styles.infoTextRtl]}>{t('detail.mausoleum.built_year')}</Text>
+                    <Text style={[styles.infoCardValue, rtl && styles.infoTextRtl]}>{pageData?.built_at}</Text>
                   </View>
                   <View style={styles.infoCard}>
-                    <Text style={styles.infoCardLabel}>{t('detail.mausoleum.built_by')}</Text>
-                    <Text style={styles.infoCardValue}>{pageData?.built_by}</Text>
+                    <Text style={[styles.infoCardLabel, rtl && styles.infoTextRtl]}>{t('detail.mausoleum.built_by')}</Text>
+                    <Text style={[styles.infoCardValue, rtl && styles.infoTextRtl]}>{pageData?.built_by}</Text>
                   </View>
                 </View>
 
                 <View style={styles.infoCardFull}>
-                  <Text style={styles.infoCardLabel}>{t('detail.mausoleum.architect')}</Text>
-                  <Text style={styles.infoCardValue}>{pageData?.architect}</Text>
+                  <Text style={[styles.infoCardLabel, rtl && styles.infoTextRtl]}>{t('detail.mausoleum.architect')}</Text>
+                  <Text style={[styles.infoCardValue, rtl && styles.infoTextRtl]}>{pageData?.architect}</Text>
                 </View>
 
                 <KeyValueItem 
@@ -196,7 +197,7 @@ function MultipleTombDetailScreen({ navigation, route }: Props) {
           <AudioPlayer 
             audioUrl={`https://dijitalistanbul.org/dijitalistanbulaudio/${postID}.mp3`}
             title={pageData?.title}
-            subtitle={t('app.subtitle')}
+            imageUrl={pageData?.thumbnail_url}
           />
         ) : selectedOption === 'location' ? (
           <View style={styles.infoBlock}>
@@ -243,6 +244,9 @@ const styles = StyleSheet.create({
     textShadowRadius: 4,
     lineHeight: 40,
   },
+  titleNewRtl: {
+    textAlign: 'right',
+  },
   content: {
     paddingHorizontal: 24,
     paddingBottom: 24,
@@ -276,6 +280,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 12,
   },
+  infoRowRtl: {
+    flexDirection: 'row-reverse',
+  },
   infoCard: {
     flex: 1,
     backgroundColor: 'transparent',
@@ -303,6 +310,9 @@ const styles = StyleSheet.create({
     color: '#1F2933',
     lineHeight: 22,
   },
+  infoTextRtl: {
+    textAlign: 'right',
+  },
   sectionContainer: {
     marginTop: 24,
   },
@@ -312,6 +322,11 @@ const styles = StyleSheet.create({
     color: '#1F2933',
     marginBottom: 12,
     paddingLeft: 4,
+  },
+  sectionTitleRtl: {
+    textAlign: 'right',
+    paddingLeft: 0,
+    paddingRight: 4,
   },
   centeredContainer: {
     flex: 1,

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Image, StyleSheet, Text, View, ActivityIndicator, TouchableOpacity } from 'react-native';
-import { t } from '../modules/i18n';
+import { t, isRtl } from '../modules/i18n';
 
 type ItemBoxProps = {
   title: string;
@@ -23,8 +23,10 @@ function ItemBoxComponent({ title, thumbnailUrl, year = '360 - 537', location = 
     setImageError(true);
   }, []);
 
+  const rtl = isRtl();
+
   return (
-    <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.7}>
+    <TouchableOpacity style={[styles.card, rtl && styles.cardRtl]} onPress={onPress} activeOpacity={0.7}>
       <View style={styles.imageContainer}>
         {imageLoading && (
           <View style={styles.loadingContainer}>
@@ -47,17 +49,17 @@ function ItemBoxComponent({ title, thumbnailUrl, year = '360 - 537', location = 
         )}
       </View>
       <View style={styles.cardContent}>
-        <Text style={styles.title} numberOfLines={2}>
+        <Text style={[styles.title, rtl && styles.titleRtl]} numberOfLines={2}>
           {title}
         </Text>
-        <View style={styles.infoRow}>
+        <View style={[styles.infoRow, rtl && styles.infoRowRtl]}>
           <View style={styles.infoColumn}>
-            <Text style={styles.infoLabel}>{t('item_box.built_year')}</Text>
-            <Text style={styles.infoValue}>{year}</Text>
+            <Text style={[styles.infoLabel, rtl && styles.infoTextRtl]}>{t('item_box.built_year')}</Text>
+            <Text style={[styles.infoValue, rtl && styles.infoTextRtl]}>{year}</Text>
           </View>
           <View style={styles.infoColumn}>
-            <Text style={styles.infoLabel}>{t('item_box.location')}</Text>
-            <Text style={styles.infoValue}>{location}</Text>
+            <Text style={[styles.infoLabel, rtl && styles.infoTextRtl]}>{t('item_box.location')}</Text>
+            <Text style={[styles.infoValue, rtl && styles.infoTextRtl]}>{location}</Text>
           </View>
         </View>
       </View>
@@ -78,6 +80,9 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.08,
     shadowRadius: 12,
     elevation: 4,
+  },
+  cardRtl: {
+    flexDirection: 'row-reverse',
   },
   imageContainer: {
     width: 120,
@@ -131,10 +136,16 @@ const styles = StyleSheet.create({
     color: '#1F2933',
     marginBottom: 8,
   },
+  titleRtl: {
+    textAlign: 'right',
+  },
   infoRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     gap: 16,
+  },
+  infoRowRtl: {
+    flexDirection: 'row-reverse',
   },
   infoColumn: {
     flex: 1,
@@ -149,6 +160,9 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: '#1F2933',
+  },
+  infoTextRtl: {
+    textAlign: 'right',
   },
 });
 

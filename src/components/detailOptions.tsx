@@ -5,7 +5,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { t } from '../modules/i18n';
+import { t, isRtl } from '../modules/i18n';
 
 type DetailOptionProps = {
   label: string;
@@ -46,8 +46,10 @@ function DetailOptionsComponent({
   onLocationPress,
   selectedOption
 }: DetailOptionsProps) {
+  const rtl = isRtl();
+
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, rtl && styles.containerRtl]}>
       <DetailOption
         label={t('detail_options.info')}
         onPress={onInfoPress}
@@ -75,6 +77,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 12,
     marginTop: 12,
+  },
+  containerRtl: {
+    flexDirection: 'row-reverse',
   },
   optionButton: {
     flex: 1,

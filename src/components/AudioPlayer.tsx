@@ -1,24 +1,26 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   Alert,
+  Animated,
+  Image,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from 'react-native';
 import Video from 'react-native-video';
-import { t } from '../modules/i18n';
+import { t, isRtl } from '../modules/i18n';
 
 interface AudioPlayerProps {
   audioUrl: string;
   title?: string;
-  subtitle?: string;
+  imageUrl?: string;
 }
 
 const AudioPlayer: React.FC<AudioPlayerProps> = ({ 
   audioUrl, 
   title = t('audio_player.default_title'),
-  subtitle = t('app.subtitle')
+  imageUrl
 }) => {
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
   const [audioDuration, setAudioDuration] = useState(0);
@@ -26,6 +28,52 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
   const [audioLoaded, setAudioLoaded] = useState(false);
   const [audioError, setAudioError] = useState<string | null>(null);
   const videoRef = useRef<any>(null);
+  const isRTL = isRtl();
+  
+  // Sound wave animation
+  const wave1 = useRef(new Animated.Value(0)).current;
+  const wave2 = useRef(new Animated.Value(0)).current;
+  const wave3 = useRef(new Animated.Value(0)).current;
+  const wave4 = useRef(new Animated.Value(0)).current;
+  const wave5 = useRef(new Animated.Value(0)).current;
+  const wave6 = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    if (isPlayingAudio) {
+      const createAnimation = (wave: Animated.Value, delay: number) => {
+        return Animated.loop(
+          Animated.sequence([
+            Animated.timing(wave, {
+              toValue: 1,
+              duration: 400,
+              delay,
+              useNativeDriver: true,
+            }),
+            Animated.timing(wave, {
+              toValue: 0,
+              duration: 400,
+              useNativeDriver: true,
+            }),
+          ])
+        );
+      };
+
+      const animations = Animated.parallel([
+        createAnimation(wave1, 0),
+        createAnimation(wave2, 100),
+        createAnimation(wave3, 200),
+        createAnimation(wave4, 300),
+        createAnimation(wave5, 200),
+        createAnimation(wave6, 100),
+      ]);
+
+      animations.start();
+
+      return () => {
+        animations.stop();
+      };
+    }
+  }, [isPlayingAudio, wave1, wave2, wave3, wave4, wave5, wave6]);
 
   const toggleAudio = () => {
     if (audioError) {
@@ -97,17 +145,79 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
         />
         
         {/* Floating Track Info Card */}
-        <View style={styles.modernTrackInfo}>
-          <View style={styles.trackIconContainer}>
-            <Text style={styles.trackIcon}>🎵</Text>
-          </View>
+        <View style={[styles.modernTrackInfo, isRTL && styles.modernTrackInfoRTL]}>
+          {imageUrl ? (
+            <Image 
+              source={{ uri: imageUrl }}
+              style={[styles.trackImage, isRTL && styles.trackImageRTL]}
+              resizeMode="cover"
+            />
+          ) : (
+            <View style={[styles.trackIconContainer, isRTL && styles.trackIconContainerRTL]}>
+              <Text style={styles.trackIcon}>🎵</Text>
+            </View>
+          )}
           <View style={styles.trackTextContainer}>
-            <Text style={styles.modernTrackTitle} numberOfLines={1}>
-              {title}
-            </Text>
-            <Text style={styles.modernTrackSubtitle} numberOfLines={1}>
-              {subtitle}
-            </Text>
+            <View style={[styles.titleRow, isRTL && styles.titleRowRTL]}>
+              <Text style={[styles.modernTrackTitle, isRTL && styles.modernTrackTitleRTL]} numberOfLines={1}>
+                {title}
+              </Text>
+              {isPlayingAudio && (
+                <View style={[styles.waveContainer, isRTL && styles.waveContainerRTL]}>
+              <Animated.View style={[styles.waveDot, { 
+                transform: [{ 
+                  scaleY: wave1.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [0.4, 1.2]
+                  })
+                }] 
+              }]} />
+              <Animated.View style={[styles.waveDot, { 
+                transform: [{ 
+                  scaleY: wave2.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [0.4, 1.4]
+                  })
+                }] 
+              }]} />
+              <Animated.View style={[styles.waveDot, styles.waveDotTall, { 
+                transform: [{ 
+                  scaleY: wave3.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [0.6, 1.8]
+                  })
+                }] 
+              }]} />
+              <Animated.View style={[styles.waveDot, styles.waveDotTallest, { 
+                transform: [{ 
+                  scaleY: wave4.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [0.8, 2]
+                  })
+                }] 
+              }]} />
+              <Animated.View style={[styles.waveDot, styles.waveDotTall, { 
+                transform: [{ 
+                  scaleY: wave5.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [0.6, 1.5]
+                  })
+                }] 
+              }]} />
+              <Animated.View style={[styles.waveDot, { 
+                transform: [{ 
+                  scaleY: wave6.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [0.4, 1]
+                  })
+                }] 
+              }]} />
+                </View>
+              )}
+            </View>
+            {audioLoaded && (
+              <Text style={[styles.trackDuration, isRTL && styles.trackDurationRTL]}>{formatTime(audioDuration)} dk</Text>
+            )}
           </View>
         </View>
         
@@ -138,10 +248,11 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
             activeOpacity={0.8}
             disabled={!audioLoaded}
           >
-            <View style={styles.controlIconContainer}>
-              <Text style={styles.modernControlIcon}>⏪</Text>
-            </View>
-            <Text style={styles.modernControlLabel}>10s</Text>
+            <Image 
+              source={require('../assets/images/back.png')}
+              style={styles.controlButtonImage}
+              resizeMode="contain"
+            />
           </TouchableOpacity>
           
           <TouchableOpacity 
@@ -150,13 +261,22 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
             activeOpacity={0.8}
             disabled={!audioLoaded && !audioError}
           >
-            <View style={styles.mainPlayIconContainer}>
-              <Text style={styles.modernMainPlayText}>
-                {!audioLoaded && !audioError ? '⏳' :
-                 audioError ? '❌' :
-                 isPlayingAudio ? '⏸' : '▶'}
-              </Text>
-            </View>
+            {!audioLoaded && !audioError ? (
+              <Text style={styles.modernMainPlayText}>⏳</Text>
+            ) : audioError ? (
+              <Text style={styles.modernMainPlayText}>❌</Text>
+            ) : isPlayingAudio ? (
+              <View style={styles.pauseIcon}>
+                <View style={styles.pauseLine} />
+                <View style={styles.pauseLine} />
+              </View>
+            ) : (
+              <Image 
+                source={require('../assets/images/play.png')}
+                style={styles.playButtonImage}
+                resizeMode="contain"
+              />
+            )}
           </TouchableOpacity>
           
           <TouchableOpacity 
@@ -165,26 +285,13 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
             activeOpacity={0.8}
             disabled={!audioLoaded}
           >
-            <View style={styles.controlIconContainer}>
-              <Text style={styles.modernControlIcon}>⏩</Text>
-            </View>
-            <Text style={styles.modernControlLabel}>10s</Text>
+            <Image 
+              source={require('../assets/images/front.png')}
+              style={styles.controlButtonImage}
+              resizeMode="contain"
+            />
           </TouchableOpacity>
         </View>
-        
-        {!audioLoaded && !audioError && (
-          <View style={styles.modernLoadingContainer}>
-            <Text style={styles.modernLoadingIcon}>🎧</Text>
-            <Text style={styles.modernLoadingText}>{t('audio_player.loading')}</Text>
-          </View>
-        )}
-        
-        {audioError && (
-          <View style={styles.modernErrorContainer}>
-            <Text style={styles.modernErrorIcon}>⚠️</Text>
-            <Text style={styles.modernErrorText}>{t('audio_player.error_load_failed')}</Text>
-          </View>
-        )}
       </View>
     </View>
   );
@@ -197,8 +304,9 @@ const styles = StyleSheet.create({
   modernAudioCard: {
     backgroundColor: 'rgba(255, 255, 255, 0.95)',
     borderRadius: 28,
-    padding: 28,
-    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 18,
+    height: 230,
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 12 },
     shadowOpacity: 0.15,
@@ -214,32 +322,68 @@ const styles = StyleSheet.create({
   modernTrackInfo: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(27, 76, 132, 0.05)',
-    borderRadius: 20,
-    padding: 16,
-    marginBottom: 24,
+    paddingHorizontal: 0,
+    paddingVertical: 0,
     width: '100%',
   },
+  modernTrackInfoRTL: {
+    flexDirection: 'row-reverse',
+  },
+  trackImage: {
+    width: 50,
+    height: 50,
+    borderRadius: 50,
+    marginRight: 12,
+  },
+  trackImageRTL: {
+    marginRight: 0,
+    marginLeft: 12,
+  },
   trackIconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 50,
+    height: 50,
+    borderRadius: 50,
     backgroundColor: 'rgba(27, 76, 132, 0.1)',
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 16,
+    marginRight: 12,
+  },
+  trackIconContainerRTL: {
+    marginRight: 0,
+    marginLeft: 12,
   },
   trackIcon: {
     fontSize: 24,
   },
   trackTextContainer: {
     flex: 1,
+    justifyContent: 'center',
+  },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  titleRowRTL: {
+    flexDirection: 'row-reverse',
   },
   modernTrackTitle: {
-    fontSize: 18,
-    fontWeight: '700',
+    fontSize: 15,
+    fontWeight: '400',
     color: '#1F2933',
-    marginBottom: 4,
+    flex: 1,
+  },
+  modernTrackTitleRTL: {
+    textAlign: 'right',
+    writingDirection: 'rtl',
+  },
+  trackDuration: {
+    fontSize: 12,
+    fontWeight: '400',
+    color: '#6B7280',
+  },
+  trackDurationRTL: {
+    textAlign: 'right',
   },
   modernTrackSubtitle: {
     fontSize: 14,
@@ -248,20 +392,21 @@ const styles = StyleSheet.create({
   },
   modernProgressSection: {
     width: '100%',
-    marginBottom: 28,
+    marginTop: 30,
+    marginBottom: 10,
   },
   modernProgressBar: {
-    height: 6,
-    backgroundColor: 'rgba(27, 76, 132, 0.1)',
-    borderRadius: 3,
+    height: 0.5,
+    backgroundColor: 'rgba(0, 0, 0, 0.1)',
+    borderRadius: 0.25,
     overflow: 'hidden',
     position: 'relative',
-    marginBottom: 12,
+    marginBottom: 8,
   },
   modernProgressFill: {
     height: '100%',
-    backgroundColor: '#3B82F6',
-    borderRadius: 3,
+    backgroundColor: '#000000',
+    borderRadius: 0.25,
     position: 'relative',
   },
   modernProgressGlow: {
@@ -270,8 +415,8 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(59, 130, 246, 0.3)',
-    borderRadius: 3,
+    backgroundColor: 'rgba(0, 0, 0, 0.1)',
+    borderRadius: 0.25,
   },
   modernTimeContainer: {
     flexDirection: 'row',
@@ -279,99 +424,87 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   modernTimeText: {
-    fontSize: 13,
+    fontSize: 12,
     color: '#6B7280',
-    fontWeight: '600',
+    fontWeight: '500',
   },
   modernPlayerControls: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 24,
-    marginBottom: 8,
+    gap: 32,
   },
   modernControlButton: {
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 12,
-    borderRadius: 16,
-    backgroundColor: 'rgba(27, 76, 132, 0.08)',
-    minWidth: 64,
+    padding: 8,
   },
   disabledButton: {
     opacity: 0.4,
   },
-  controlIconContainer: {
-    marginBottom: 4,
-  },
-  modernControlIcon: {
-    fontSize: 20,
-    color: '#1B4C84',
-  },
-  modernControlLabel: {
-    fontSize: 11,
-    color: '#6B7280',
-    fontWeight: '600',
+  controlButtonImage: {
+    width: 28,
+    height: 28,
   },
   modernMainPlayButton: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: '#1B4C84',
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: '#EDEFF2',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#1B4C84',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.35,
-    shadowRadius: 16,
-    elevation: 8,
-    transform: [{ scale: 1 }],
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
   },
   pauseButton: {
-    backgroundColor: '#EF4444',
-    shadowColor: '#EF4444',
+    backgroundColor: '#EDEFF2',
+    shadowColor: '#000000',
   },
-  mainPlayIconContainer: {
+  playButtonImage: {
+    width: 36,
+    height: 36,
+  },
+  pauseIcon: {
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    gap: 6,
+  },
+  pauseLine: {
+    width: 5,
+    height: 26,
+    backgroundColor: '#000000',
+    borderRadius: 2.5,
   },
   modernMainPlayText: {
     fontSize: 32,
-    color: '#FFFFFF',
+    color: '#1F2933',
     fontWeight: '600',
   },
-  modernLoadingContainer: {
+  waveContainer: {
+    flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
-    backgroundColor: 'rgba(59, 130, 246, 0.05)',
-    borderRadius: 16,
-    marginTop: 8,
+    gap: 2.5,
+    marginLeft: 6,
   },
-  modernLoadingIcon: {
-    fontSize: 28,
-    marginBottom: 8,
+  waveContainerRTL: {
+    marginLeft: 0,
+    marginRight: 6,
   },
-  modernLoadingText: {
-    fontSize: 14,
-    color: '#6B7280',
-    fontWeight: '500',
+  waveDot: {
+    width: 2,
+    height: 8,
+    backgroundColor: '#000000',
+    borderRadius: 1,
   },
-  modernErrorContainer: {
-    alignItems: 'center',
-    padding: 16,
-    backgroundColor: 'rgba(239, 68, 68, 0.05)',
-    borderRadius: 16,
-    marginTop: 8,
+  waveDotTall: {
+    height: 12,
   },
-  modernErrorIcon: {
-    fontSize: 28,
-    marginBottom: 8,
-  },
-  modernErrorText: {
-    fontSize: 14,
-    color: '#EF4444',
-    fontWeight: '500',
-    textAlign: 'center',
+  waveDotTallest: {
+    height: 16,
   },
 });
 

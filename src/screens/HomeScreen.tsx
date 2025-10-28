@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, View, useWindowDimensions, Text, ScrollView, Pressable, Image, Linking, Button, Dimensions } from 'react-native';
+import { StyleSheet, View, useWindowDimensions, Text, ScrollView, Pressable, Image, Linking, Dimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { CompositeNavigationProp } from '@react-navigation/native';
@@ -11,7 +11,7 @@ import Slider from '../components/slider';
 import HomeBox from '../components/homeBoxes';
 import HomepageSearchBox from '../components/homepageSearchBox';
 import { RootStackParamList } from '../navigation/AppNavigator';
-import { t } from '../modules/i18n';
+import { t, isRtl } from '../modules/i18n';
 
 type TabParamList = {
   Home: undefined;
@@ -29,9 +29,24 @@ type NavigationProp = CompositeNavigationProp<
 const HomeScreen = () => {
   const navigation = useNavigation<NavigationProp>();
   const [searchText, setSearchText] = React.useState('');
+  const [isSearchResultsVisible, setIsSearchResultsVisible] = React.useState(false);
   const { height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const headerBaseHeight = getHeaderExtension(height);
+  const isRTL = isRtl();
+
+  const handleSearchTextChange = (text: string) => {
+    setSearchText(text);
+    if (text.length >= 3) {
+      setIsSearchResultsVisible(true);
+    } else {
+      setIsSearchResultsVisible(false);
+    }
+  };
+
+  const handleCloseSearchResults = () => {
+    setIsSearchResultsVisible(false);
+  };
 
   const handleCamilerPress = () => {
     navigation.navigate('CulturalAssets', { filter: 'mosque' });
@@ -39,14 +54,6 @@ const HomeScreen = () => {
 
   const handleTurbelerPress = () => {
     navigation.navigate('CulturalAssets', { filter: 'mausoleum' });
-  };
-
-  const handleKiliselerPress = () => {
-    navigation.navigate('CulturalAssets', { filter: 'church' });
-  };
-
-  const handleOkullarPress = () => {
-    navigation.navigate('CulturalAssets', { filter: 'school' });
   };
 
   const handleValiPress = () => {
@@ -70,19 +77,46 @@ const HomeScreen = () => {
       />
       
       <View style={[styles.staticContent, { paddingTop: headerBaseHeight }]}>
-        <Text style={[styles.greetingTitle, { marginTop: -headerBaseHeight/2, fontSize: headerBaseHeight/7.6  }]}>{t('home.greeting')}</Text>
+        <Text style={[
+          styles.greetingTitle, 
+          isRTL && styles.greetingTitleRTL,
+          { marginTop: -headerBaseHeight/2, fontSize: headerBaseHeight/7.6  }
+        ]}>
+          {t('home.greeting')}
+        </Text>
         <View style={[styles.searchRow, { position: 'absolute', top: headerBaseHeight - (SEARCH_INPUT_HEIGHT/2), }]}>
-          <SearchInput onClear={() => setSearchText('')} onChangeText={setSearchText} value={searchText} />
+          <SearchInput 
+            onClear={() => {
+              setSearchText('');
+              setIsSearchResultsVisible(false);
+            }} 
+            onChangeText={handleSearchTextChange} 
+            value={searchText} 
+          />
         </View>
-        {searchText.length > 0 && <HomepageSearchBox searchTerm={searchText} navigation={navigation} />}
+        {searchText.length >= 3 && isSearchResultsVisible && (
+          <>
+            {/* Overlay to close search results when clicking outside - MUST be before HomepageSearchBox */}
+            <Pressable 
+              style={styles.overlay}
+              onPress={handleCloseSearchResults}
+            />
+            <HomepageSearchBox 
+              searchTerm={searchText} 
+              navigation={navigation}
+              onItemPress={handleCloseSearchResults}
+            />
+          </>
+        )}
       </View>
+
       <ScrollView
         contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 100, marginTop: 55 }]}
         showsVerticalScrollIndicator={false}
       >
-        <View style={{ marginTop: 0 }}>
-          <Slider />
-        </View>
+          <View style={{ marginTop: 0 }}>
+            <Slider />
+          </View>
         <View style={styles.boxesRow}>
           <View style={styles.boxWrapper}>
             <HomeBox
@@ -196,6 +230,11 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: '700',
     color: '#0F172A',
+    textAlign: 'left',
+  },
+  greetingTitleRTL: {
+    textAlign: 'right',
+    writingDirection: 'rtl',
   },
   description: {
     fontSize: 16,
@@ -222,6 +261,16 @@ const styles = StyleSheet.create({
   sponsorImage: {
     width: '100%',
     height: 80,
+  },
+  overlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 50,
+    elevation: 50,
+    backgroundColor: 'transparent',
   },
 });
 

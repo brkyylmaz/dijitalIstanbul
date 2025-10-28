@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, LayoutAnimation, Platform, UIManager } from 'react-native';
+import { isRtl } from '../modules/i18n';
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
@@ -17,6 +18,7 @@ const AccordionItem: React.FC<AccordionItemProps> = ({
   isInitiallyOpen = false 
 }) => {
   const [isOpen, setIsOpen] = useState(isInitiallyOpen);
+  const rtl = isRtl();
 
   const toggleAccordion = () => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
@@ -26,12 +28,12 @@ const AccordionItem: React.FC<AccordionItemProps> = ({
   return (
     <View style={styles.container}>
       <TouchableOpacity 
-        style={styles.header} 
+        style={[styles.header, rtl && styles.headerRtl]} 
         onPress={toggleAccordion}
         activeOpacity={0.7}
       >
-        <Text style={styles.headerText}>{title}</Text>
-        <Text style={styles.icon}>{isOpen ? '−' : '+'}</Text>
+        <Text style={[styles.headerText, rtl && styles.headerTextRtl]}>{title}</Text>
+        <Text style={[styles.icon, rtl && styles.iconRtl]}>{isOpen ? '−' : '+'}</Text>
       </TouchableOpacity>
       
       {isOpen && (
@@ -58,17 +60,27 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 16,
   },
+  headerRtl: {
+    flexDirection: 'row-reverse',
+  },
   headerText: {
     fontSize: 16,
     fontWeight: '700',
     color: '#1F2933',
     flex: 1,
   },
+  headerTextRtl: {
+    textAlign: 'right',
+  },
   icon: {
     fontSize: 24,
     fontWeight: '600',
     color: '#1F2933',
     marginLeft: 12,
+  },
+  iconRtl: {
+    marginLeft: 0,
+    marginRight: 12,
   },
   content: {
     paddingHorizontal: 16,

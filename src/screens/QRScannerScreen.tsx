@@ -20,6 +20,8 @@ function QRScannerScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const [isProcessing, setIsProcessing] = useState(false);
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
+  const [isFocused, setIsFocused] = useState(true);
+  const [hasError, setHasError] = useState(false);
   const device = useCameraDevice('back');
 
   useEffect(() => {
@@ -46,16 +48,19 @@ function QRScannerScreen() {
   // Ekran her focus olduğunda state'i sıfırla
   useFocusEffect(
     React.useCallback(() => {
+      setIsFocused(true);
       setIsProcessing(false);
+      setHasError(false);
       
       return () => {
-        // Cleanup: ekrandan çıkarken
+        // Cleanup: ekrandan çıkarken kamerayı kapat
+        setIsFocused(false);
       };
     }, [])
   );
 
   const handleBarCodeScanned = async (code: string) => {
-    if (isProcessing) {
+    if (isProcessing || hasError) {
       return;
     }
 
@@ -76,19 +81,30 @@ function QRScannerScreen() {
       }
 
     } catch (error) {
+      setHasError(true);
       Alert.alert(
         t('qr_scanner.scan_error_title'),
         error instanceof Error ? error.message : t('qr_scanner.unexpected_error'),
+        [
+          {
+            text: 'OK',
+            onPress: () => {
+              setHasError(false);
+              setIsProcessing(false);
+            }
+          }
+        ]
       );
-    } finally {
-      setIsProcessing(false);
+      return;
     }
+    
+    setIsProcessing(false);
   }
 
   const codeScanner = useCodeScanner({
     codeTypes: ['qr', 'ean-13'],
     onCodeScanned: (codes) => {
-      if (codes.length > 0 && codes[0].value && !isProcessing) {
+      if (codes.length > 0 && codes[0].value && !isProcessing && !hasError) {
         handleBarCodeScanned(codes[0].value);
       }
     },
@@ -137,7 +153,7 @@ function QRScannerScreen() {
       <Camera
         style={StyleSheet.absoluteFill}
         device={device}
-        isActive={!isProcessing}
+        isActive={isFocused && !isProcessing && !hasError}
         codeScanner={codeScanner}
       />
       <View style={styles.overlay}>

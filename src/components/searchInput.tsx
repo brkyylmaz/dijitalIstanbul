@@ -1,6 +1,6 @@
 import React from 'react';
 import { Image, StyleSheet, TextInput, TouchableOpacity, View, type StyleProp, type ViewStyle } from 'react-native';
-import { t } from '../modules/i18n';
+import { t, isRtl } from '../modules/i18n';
 
 type SearchInputProps = {
   value: string;
@@ -14,9 +14,11 @@ export const SEARCH_INPUT_HEIGHT = 56;
 const SEARCH_INPUT_RADIUS = 20;
 
 function SearchInput({ value, onChangeText, onClear, placeholder = t('search.placeholder'), style}: SearchInputProps) {
+  const isRTL = isRtl();
+  
   return (
-    <View style={[styles.container, style]}>
-      <View style={styles.iconContainer}>
+    <View style={[styles.container, isRTL && styles.containerRTL, style]}>
+      <View style={[styles.iconContainer, isRTL && styles.iconContainerRTL]}>
         <Image
           resizeMode="contain"
           source={require('../assets/images/searchIcon.png')}
@@ -29,12 +31,12 @@ function SearchInput({ value, onChangeText, onClear, placeholder = t('search.pla
         placeholder={placeholder}
         placeholderTextColor="#6B6F76"
         returnKeyType="search"
-        style={styles.input}
+        style={[styles.input, isRTL && styles.inputRTL]}
         value={value}
       />
       {value.length > 0 && (
         <TouchableOpacity
-          style={styles.clearButton}
+          style={[styles.clearButton, isRTL && styles.clearButtonRTL]}
           onPress={onClear}
           accessibilityLabel={t('components.search.clear_search')}
         >
@@ -105,6 +107,23 @@ const styles = StyleSheet.create({
   },
   clearLine2: {
     transform: [{ rotate: '-45deg' }],
+  },
+  
+  // RTL (Arapça) Stilleri
+  containerRTL: {
+    flexDirection: 'row-reverse',
+  },
+  iconContainerRTL: {
+    marginRight: 0,
+    marginLeft: 10,
+  },
+  inputRTL: {
+    textAlign: 'right',
+    writingDirection: 'rtl',
+  },
+  clearButtonRTL: {
+    marginLeft: 0,
+    marginRight: 8,
   },
 });
 

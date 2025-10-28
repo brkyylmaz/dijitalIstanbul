@@ -1,9 +1,9 @@
 {
     "home": {
-      "greeting": "مرحبًا بك في Dijital İstanbul",
+      "greeting": "مرحبًا بك",
       "categories": {
         "mosques": "المساجد",
-        "mausoleums": "الأضرحة",
+        "mausoleums": "ضريح",
         "churches": "الكنائس",
         "schools": "المدارس"
       }
@@ -61,7 +61,7 @@
       "open_settings": "افتح الإعدادات",
       "camera_loading": "جارٍ تحميل الكاميرا...",
       "scan_qr_instruction": "يرجى مسح رمز QR",
-      "redirect_message": "سيتم إرسالُك إلى تفاصيل المسجد المتعلق برمز QR الممسوح.",
+      "redirect_message": "سيتم إرسالُك إلى تفاصيل الأصول الثقافية المتعلقة برمز QR الممسوح.",
       "processing": "جارٍ المعالجة...",
       "scan_error_title": "خطأ في المسح",
       "unexpected_error": "خطأ غير متوقع"
@@ -95,6 +95,21 @@
       "language_selection_label": "اختيار اللغة",
       "favorites": "المفضلة",
       "back": "عودة"
+    },
+    "onboarding": {
+      "slide1": {
+        "title": "مدينة ذكية، تاريخ عريق: إسطنبول الرقمية.",
+        "description": "منصة لإعادة اكتشاف إسطنبول."
+      },
+      "slide2": {
+        "title": "اكتشف الأصول الثقافية",
+        "description": "استكشف المساجد التاريخية والأضرحة والأصول الثقافية الأخرى في إسطنبول."
+      },
+      "slide3": {
+        "title": "وصول سريع باستخدام رمز QR",
+        "description": "احصل على معلومات مفصلة فورًا عن طريق مسح رموز QR."
+      },
+      "continue": "متابعة"
     }
   }
   

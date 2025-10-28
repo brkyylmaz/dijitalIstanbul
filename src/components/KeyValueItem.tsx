@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { isRtl } from '../modules/i18n';
 
 interface KeyValueItemProps {
   label: string;
@@ -13,18 +14,20 @@ const KeyValueItem: React.FC<KeyValueItemProps> = ({
   valueStyle = 'normal' 
 }) => {
   const isArray = Array.isArray(value);
+  const rtl = isRtl();
 
   return (
     <View style={styles.container}>
-      <Text style={styles.label}>{label}</Text>
+      <Text style={[styles.label, rtl && styles.labelRtl]}>{label}</Text>
       {isArray ? (
         <View style={styles.listContainer}>
           {value.map((item, index) => (
-            <View key={index} style={styles.listItem}>
-              <Text style={styles.bullet}>•</Text>
+            <View key={index} style={[styles.listItem, rtl && styles.listItemRtl]}>
+              <Text style={[styles.bullet, rtl && styles.bulletRtl]}>•</Text>
               <Text style={[
                 styles.value, 
-                valueStyle === 'bold' && styles.valueBold
+                valueStyle === 'bold' && styles.valueBold,
+                rtl && styles.valueRtl
               ]}>
                 {item}
               </Text>
@@ -34,7 +37,8 @@ const KeyValueItem: React.FC<KeyValueItemProps> = ({
       ) : (
         <Text style={[
           styles.value, 
-          valueStyle === 'bold' && styles.valueBold
+          valueStyle === 'bold' && styles.valueBold,
+          rtl && styles.valueRtl
         ]}>
           {value}
         </Text>
@@ -57,11 +61,17 @@ const styles = StyleSheet.create({
     color: '#52606D',
     marginBottom: 8,
   },
+  labelRtl: {
+    textAlign: 'right',
+  },
   value: {
     fontSize: 16,
     fontWeight: '600',
     color: '#1F2933',
     lineHeight: 22,
+  },
+  valueRtl: {
+    textAlign: 'right',
   },
   valueBold: {
     fontWeight: '700',
@@ -74,12 +84,19 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     alignItems: 'flex-start',
   },
+  listItemRtl: {
+    flexDirection: 'row-reverse',
+  },
   bullet: {
     fontSize: 16,
     fontWeight: '700',
     color: '#1F2933',
     marginRight: 8,
     marginTop: 2,
+  },
+  bulletRtl: {
+    marginRight: 0,
+    marginLeft: 8,
   },
 });
 

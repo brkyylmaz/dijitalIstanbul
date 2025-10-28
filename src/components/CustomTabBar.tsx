@@ -22,9 +22,13 @@ const tabs: TabItem[] = [
   {
     name: 'CulturalAssets',
     route: 'CulturalAssets',
-    icon: require('../assets/images/camiIconWhite.png'),
+    icon: require('../assets/images/dijitalwhite.png'),
   },
 ];
+
+const inactiveTabs = {
+  CulturalAssets: require('../assets/images/dijitalgray.png'),
+};
 
 const CustomTabBarComponent = React.memo(function CustomTabBar({ state, navigation }: BottomTabBarProps) {
   const handleTabPress = React.useCallback((routeName: string, index: number) => {
@@ -49,12 +53,26 @@ const CustomTabBarComponent = React.memo(function CustomTabBar({ state, navigati
     }
   }, [navigation, state.routes]);
 
-  const getTabIcon = React.useCallback((routeName: string) => {
+  const getTabIcon = React.useCallback((routeName: string, isFocused: boolean) => {
     const tab = tabs.find((t) => t.name === routeName);
-    return tab || tabs[0];
+    if (!tab) return tabs[0];
+    
+    // CulturalAssets için aktif/pasif durumuna göre farklı ikon
+    if (routeName === 'CulturalAssets' && !isFocused) {
+      return {
+        ...tab,
+        icon: inactiveTabs.CulturalAssets,
+      };
+    }
+    
+    return tab;
   }, []);
 
-  const getIconTintColor = React.useCallback((isFocused: boolean) => {
+  const getIconTintColor = React.useCallback((isFocused: boolean, routeName: string) => {
+    // CulturalAssets için tintColor kullanmayız çünkü ikon değiştiriyoruz
+    if (routeName === 'CulturalAssets') {
+      return undefined;
+    }
     return isFocused ? '#FFFFFF' : '#A8A8A8';
   }, []);
 
@@ -63,8 +81,10 @@ const CustomTabBarComponent = React.memo(function CustomTabBar({ state, navigati
       <View style={styles.tabBarContainer}>
         {state.routes.map((route, index) => {
           const isFocused = state.index === index;
-          const tab = getTabIcon(route.name);
+          const tab = getTabIcon(route.name, isFocused);
           const isQR = route.name === 'QR';
+          const isCulturalAssets = route.name === 'CulturalAssets';
+          const tintColor = getIconTintColor(isFocused, route.name);
 
           return (
             <Pressable
@@ -81,8 +101,8 @@ const CustomTabBarComponent = React.memo(function CustomTabBar({ state, navigati
                 resizeMode="contain"
                 source={tab.icon}
                 style={[
-                  isQR ? styles.iconQr : styles.iconSmall,
-                  { tintColor: getIconTintColor(isFocused) }
+                  isQR ? styles.iconQr : isCulturalAssets ? styles.iconCulturalAssets : styles.iconSmall,
+                  tintColor && { tintColor }
                 ]}
               />
             </Pressable>
@@ -136,6 +156,10 @@ const styles = StyleSheet.create({
   iconSmall: {
     width: 28,
     height: 28,
+  },
+  iconCulturalAssets: {
+    width: 36,
+    height: 36,
   },
   iconQr: {
     width: 48,

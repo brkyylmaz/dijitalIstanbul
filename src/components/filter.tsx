@@ -8,7 +8,7 @@ import {
   View,
   ViewStyle,
 } from 'react-native';
-import { t } from '../modules/i18n';
+import { t, isRtl } from '../modules/i18n';
 
 type FilterOption = {
   id: string;
@@ -65,12 +65,17 @@ function FilterComponent({ selectedFilter, onFilterChange, buttonStyle = {} }: F
     return () => onFilterChange(optionId);
   }, [onFilterChange]);
 
+  const rtl = isRtl();
+
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, rtl && styles.containerRtl]}>
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[
+          styles.scrollContent,
+          rtl && styles.scrollContentRtl
+        ]}
       >
         {FILTER_OPTIONS.map((option) => (
           <FilterButton
@@ -94,9 +99,18 @@ const styles = StyleSheet.create({
     height: FILTER_HEIGHT,
     marginTop: 12,
   },
+  containerRtl: {
+    alignItems: 'flex-end',
+  },
   scrollContent: {
     gap: 12,
     paddingRight: 16,
+    flexDirection: 'row',
+  },
+  scrollContentRtl: {
+    flexDirection: 'row-reverse',
+    paddingRight: 0,
+    paddingLeft: 16,
   },
   filterButton: {
     height: 40,

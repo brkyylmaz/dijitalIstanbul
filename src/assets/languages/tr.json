@@ -1,6 +1,6 @@
 {
   "home": {
-    "greeting": "Dijital İstanbul'a Hoşgeldin",
+    "greeting": "Hoşgeldin",
     "categories": {
       "mosques": "Camiler",
       "mausoleums": "Türbeler",
@@ -61,7 +61,7 @@
     "open_settings": "Ayarları Aç",
     "camera_loading": "Kamera yükleniyor...",
     "scan_qr_instruction": "Lütfen QR kodunu taratın",
-    "redirect_message": "Taradığınız QR kodu ile ilgili cami detaylarına yönlendirileceksiniz.",
+    "redirect_message": "Taradığınız QR kodu ile ilgili kültür varlığı detaylarına yönlendirileceksiniz.",
     "processing": "İşleniyor...",
     "scan_error_title": "Tarama Hatası",
     "unexpected_error": "Beklenmeyen hata"
@@ -95,5 +95,20 @@
     "language_selection_label": "Dil Seçimi",
     "favorites": "Favoriler",
     "back": "Geri"
-  }
+  },
+    "onboarding": {
+      "slide1": {
+        "title": "Akıllı Şehir, Derin Tarih: Dijital İstanbul.",
+        "description": "İstanbul'u Yeniden Keşfetme Platformu."
+      },
+      "slide2": {
+        "title": "Kültür Varlıklarını Keşfet",
+        "description": "İstanbul'un tarihi camilerini, türbelerini ve diğer kültür varlıklarını keşfedin."
+      },
+      "slide3": {
+        "title": "QR Kod ile Hızlı Erişim",
+        "description": "QR kodlarını tarayarak anında detaylı bilgilere ulaşın."
+      },
+      "continue": "Devam"
+    }
 }

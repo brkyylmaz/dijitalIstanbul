@@ -17,9 +17,11 @@ import HomeScreen from '../screens/HomeScreen';
 import MosqueDetailScreen from '../screens/MosqueDetailScreen';
 import MultipleTombDetailScreen from '../screens/MultipleTombDetail';
 import QRScannerScreen from '../screens/QRScannerScreen';
+import OnboardingScreen from '../screens/OnboardingScreen';
 import i18n, { lang_list, t } from '../modules/i18n';
 
 export type RootStackParamList = {
+  Onboarding: undefined;
   MainTabs: undefined;
   MosqueDetail: {
     postID: number;
@@ -37,9 +39,9 @@ const headerStyles = StyleSheet.create({
     backgroundColor: 'transparent',
   },
   iconButton: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     backgroundColor: '#FFFFFF',
     justifyContent: 'center',
     alignItems: 'center',
@@ -129,7 +131,18 @@ function AppNavigator() {
 
   return (
     <NavigationContainer>
-      <Stack.Navigator>
+      <Stack.Navigator initialRouteName="Onboarding">
+        <Stack.Screen
+          name="Onboarding"
+          options={{ headerShown: false }}
+        >
+          {(props) => (
+            <OnboardingScreen
+              {...props}
+              onComplete={() => props.navigation.replace('MainTabs')}
+            />
+          )}
+        </Stack.Screen>
         <Stack.Screen
           component={MainTabs}
           name="MainTabs"

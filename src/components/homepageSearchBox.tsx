@@ -1,13 +1,12 @@
 import { PageListItem } from "../types/listElem";
-import { View, Text, StyleSheet, TouchableOpacity, useWindowDimensions, FlatList } from "react-native";
+import { View, StyleSheet, useWindowDimensions, FlatList } from "react-native";
 import ItemBox from "./itemBox";
 import { SEARCH_INPUT_HEIGHT } from "./searchInput";
 import { HORIZONTAL_SCREEN_PADDING, getHeaderExtension } from "../theme/layout";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useSnapshot } from "valtio";
 import { store } from "../store+client/store";
 
-const HomepageSearchBox = ({searchTerm, navigation}: {searchTerm: string, navigation: any}) => {
+const HomepageSearchBox = ({searchTerm, navigation, onItemPress}: {searchTerm: string, navigation: any, onItemPress?: () => void}) => {
   const { height } = useWindowDimensions();
   const headerBaseHeight = getHeaderExtension(height);
   const snap = useSnapshot(store);
@@ -34,6 +33,10 @@ const HomepageSearchBox = ({searchTerm, navigation}: {searchTerm: string, naviga
           break;
   
       }
+    // Close search results after navigation
+    if (onItemPress) {
+      onItemPress();
+    }
   }
 
   const renderItem = ({ item, index }: { item: any, index: number }) => (
@@ -78,7 +81,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
     shadowRadius: 4,
-    elevation: 3,
+    elevation: 100,
   },
   resultsContainer: {
     backgroundColor: '#FFFFFF',

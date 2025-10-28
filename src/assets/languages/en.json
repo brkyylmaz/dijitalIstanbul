@@ -1,9 +1,9 @@
 {
   "home": {
-    "greeting": "Welcome to Dijital İstanbul",
+    "greeting": "Welcome",
     "categories": {
       "mosques": "Mosques",
-      "mausoleums": "Mausoleums",
+      "mausoleums": "Tombs",
       "churches": "Churches",
       "schools": "Schools"
     }
@@ -35,7 +35,7 @@
       "built_by": "Commissioned by",
       "architect": "Architect"
     },
-    "tomb_about": "About the Mausoleum",
+    "tomb_about": "About the Tomb",
     "person_life_years": "Birth/Death:",
     "person_title": "Title:",
     "person_about": "About:",
@@ -61,7 +61,7 @@
     "open_settings": "Open Settings",
     "camera_loading": "Camera is loading...",
     "scan_qr_instruction": "Please scan the QR code",
-    "redirect_message": "You will be redirected to mosque details related to the scanned QR code.",
+    "redirect_message": "You will be redirected to cultural asset details related to the scanned QR code.",
     "processing": "Processing...",
     "scan_error_title": "Scan Error",
     "unexpected_error": "Unexpected error"
@@ -73,7 +73,7 @@
   },
   "filters": {
     "mosque": "Mosque",
-    "mausoleum": "Mausoleum",
+    "mausoleum": "Tomb",
     "church": "Church",
     "school": "School"
   },
@@ -95,5 +95,20 @@
     "language_selection_label": "Language Selection",
     "favorites": "Favorites",
     "back": "Back"
+  },
+  "onboarding": {
+    "slide1": {
+      "title": "Smart City, Deep History: Digital Istanbul.",
+      "description": "Platform to Rediscover Istanbul."
+    },
+    "slide2": {
+      "title": "Discover Cultural Assets",
+      "description": "Explore Istanbul's historic mosques, tombs and other cultural assets."
+    },
+    "slide3": {
+      "title": "Quick Access with QR Code",
+      "description": "Instantly access detailed information by scanning QR codes."
+    },
+    "continue": "Continue"
   }
 }

@@ -5,7 +5,6 @@ import {
   Image,
   Platform,
   StyleSheet,
-  Text,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -25,17 +24,25 @@ interface HeaderComponentProps {
 
 const headerStyles = StyleSheet.create({
   logoContainer: {
-    padding: 4,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    height: 36,
   },
   logo: {
     width: 36,
     height: 36,
     tintColor: '#121417',
   },
+  textLogo: {
+    width: 200,
+    height: 100,
+    resizeMode: 'contain',
+  },
   iconButton: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     backgroundColor: '#FFFFFF',
     justifyContent: 'center',
     alignItems: 'center',
@@ -65,8 +72,8 @@ const headerStyles = StyleSheet.create({
     
   },
   languageIcon: {
-    height: 48,
-    width: 72,
+    height: 36,
+    width: 60,
     justifyContent: "flex-start"
   },
 });
@@ -80,6 +87,11 @@ export const HeaderLeft: React.FC<{ showLogo?: boolean }> = ({ showLogo = true }
         resizeMode="contain"
         source={require('../assets/images/dijitalIstanbulLogo.png')}
         style={headerStyles.logo}
+      />
+      <Image
+        resizeMode="contain"
+        source={require('../assets/images/DijitalIstanbul.png')}
+        style={headerStyles.textLogo}
       />
     </View>
   );
@@ -128,7 +140,6 @@ export const HeaderRight: React.FC<HeaderComponentProps> = ({
     }
   }
 
-  const onNotificationPress = () => {};
   const onLanguagePress = () => {
     openLangSelector();
   }
@@ -191,8 +202,8 @@ export const HeaderRight: React.FC<HeaderComponentProps> = ({
         style={[
           headerStyles.iconButton, 
           headerStyles.languageButton,
-          i18n.language == "en" && {alignItems: "flex-start"},
-          i18n.language == "tr" && {paddingLeft: 18},
+          i18n.language == "en" && {paddingLeft: 8},
+          i18n.language == "tr" && {paddingLeft: 12},
         ]}
         accessibilityLabel={accessibilityLabels?.languageSelection}
         activeOpacity={0.7}

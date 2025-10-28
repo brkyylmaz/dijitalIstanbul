@@ -11,12 +11,13 @@ import {
   View,
   useWindowDimensions,
 } from 'react-native';
-import { t } from '../modules/i18n';
+import { t, isRtl } from '../modules/i18n';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/AppNavigator';
 import { HORIZONTAL_SCREEN_PADDING } from '../theme/layout';
 import { PageListItem, store } from '../store+client/store';
+import { useSnapshot } from 'valtio';
 
 const SLIDE_HEIGHT = 300;
 const DOT_SIZE = 10;
@@ -30,26 +31,46 @@ const Slider = () => {
   const slideWidth = Math.max(0, width - HORIZONTAL_SCREEN_PADDING * 2);
   const [activeIndex, setActiveIndex] = React.useState(0);
   const flatListRef = React.useRef<FlatList>(null);
+  const isRTL = isRtl();
+  const snap = useSnapshot(store);
 
-  const featuredMosques = (()=>{
-    const ids: Record<number, number> = {};
-    let cnt = 0;
+  // Her uygulama açılışında rastgele cami ve türbeler seç
+  const featuredMosques = React.useMemo(() => {
+    // Cami ve türbeleri filtrele
+    const culturalAssets = snap.pageList.filter((item: PageListItem) => 
+      item.page_type === 'mosque' || 
+      item.page_type === 'mausoleum-single' || 
+      item.page_type === 'mausoleum-multi'
+    );
 
-    for (let i=0; i<store.pageList.length && cnt < store.appAttributes.highlighted.length; i++){
-      if (store.appAttributes.highlighted.includes(store.pageList[i].trid)){
-        ids[store.pageList[i].trid] = i;
-        cnt++
-      }
+    // Rastgele karıştır (Fisher-Yates shuffle algoritması)
+    const shuffled = [...culturalAssets];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
     }
 
-    return store.appAttributes.highlighted.map(trid => store.pageList[ids[trid]]);
-  })()
+    // İlk 5 tanesini al (veya daha az varsa hepsini)
+    return shuffled.slice(0, Math.min(5, shuffled.length));
+  }, [snap.pageList])
 
-  const handleMosquePress = (item: PageListItem)=>{
-    navigation.navigate('MosqueDetail', {
-      postID: item.id
-    });
-  }
+  const handleMosquePress = React.useCallback((item: PageListItem)=>{
+    // Cami ve türbeleri ilgili detay sayfasına yönlendir
+    switch (item.page_type) {
+      case "mosque":
+      case "mausoleum-single":
+        navigation.navigate('MosqueDetail', {
+          postID: item.id
+        });
+        break;
+
+      case "mausoleum-multi":
+        navigation.navigate('MultipleTombDetail', {
+          postID: item.id
+        });
+        break;
+    }
+  }, [navigation]);
 
   const handleScroll = React.useCallback(
     (event: NativeSyntheticEvent<NativeScrollEvent>) => {
@@ -59,7 +80,7 @@ const Slider = () => {
         setActiveIndex(index);
       }
     },
-    [activeIndex, slideWidth],
+    [activeIndex, slideWidth, featuredMosques.length],
   );
 
   const scrollToIndex = React.useCallback(
@@ -69,7 +90,7 @@ const Slider = () => {
         setActiveIndex(index);
       }
     },
-    [],
+    [featuredMosques.length],
   );
 
   const renderItem = React.useCallback(
@@ -85,12 +106,12 @@ const Slider = () => {
             style={styles.slideImage}
           >
             <View style={styles.overlay} />
-            <View style={styles.slideContent}>
-              <Text numberOfLines={2} style={styles.slideTitle}>
+            <View style={[styles.slideContent, isRTL && styles.slideContentRTL]}>
+              <Text numberOfLines={2} style={[styles.slideTitle, isRTL && styles.slideTitleRTL]}>
                 {item.title}
               </Text>
               <View
-                style={styles.dotsContainer}
+                style={[styles.dotsContainer, isRTL && styles.dotsContainerRTL]}
                 accessible
                 accessibilityRole="adjustable"
                 accessibilityLabel={`Slider göstergesi, ${featuredMosques.length} öğe`}
@@ -115,7 +136,7 @@ const Slider = () => {
         </TouchableOpacity>
       </View>
     ),
-    [activeIndex, slideWidth, scrollToIndex, handleMosquePress],
+    [activeIndex, slideWidth, scrollToIndex, handleMosquePress, isRTL, featuredMosques],
   );
 
   return (
@@ -204,6 +225,18 @@ const styles = StyleSheet.create({
   activeDot: {
     backgroundColor: '#FFFFFF',
     width: DOT_SIZE * 2.4,
+  },
+  
+  // RTL (Arapça) Stilleri
+  slideContentRTL: {
+    flexDirection: 'row-reverse',
+  },
+  slideTitleRTL: {
+    textAlign: 'right',
+    writingDirection: 'rtl',
+  },
+  dotsContainerRTL: {
+    justifyContent: 'flex-start',
   },
 });
 

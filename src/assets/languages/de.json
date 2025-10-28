@@ -1,9 +1,9 @@
 {
   "home": {
-    "greeting": "Willkommen bei Dijital İstanbul",
+    "greeting": "Willkommen",
     "categories": {
       "mosques": "Moscheen",
-      "mausoleums": "Mausoleen",
+      "mausoleums": "Mausoleum",
       "churches": "Kirchen",
       "schools": "Schulen"
     }
@@ -61,7 +61,7 @@
     "open_settings": "Einstellungen öffnen",
     "camera_loading": "Kamera wird geladen...",
     "scan_qr_instruction": "Bitte QR-Code scannen",
-    "redirect_message": "Sie werden zu den Moschee-Details weitergeleitet, die mit dem gescannten QR-Code verknüpft sind.",
+    "redirect_message": "Sie werden zu den Kulturgut-Details weitergeleitet, die mit dem gescannten QR-Code verknüpft sind.",
     "processing": "Wird verarbeitet...",
     "scan_error_title": "Scan-Fehler",
     "unexpected_error": "Unerwarteter Fehler"
@@ -95,5 +95,20 @@
     "language_selection_label": "Sprachauswahl",
     "favorites": "Favoriten",
     "back": "Zurück"
+  },
+  "onboarding": {
+    "slide1": {
+      "title": "Intelligente Stadt, tiefe Geschichte: Digitales Istanbul.",
+      "description": "Plattform zur Wiederentdeckung von Istanbul."
+    },
+    "slide2": {
+      "title": "Entdecken Sie Kulturgüter",
+      "description": "Erkunden Sie die historischen Moscheen, Mausoleen und andere Kulturgüter Istanbuls."
+    },
+    "slide3": {
+      "title": "Schneller Zugriff mit QR-Code",
+      "description": "Erhalten Sie sofort detaillierte Informationen durch Scannen von QR-Codes."
+    },
+    "continue": "Weiter"
   }
 }

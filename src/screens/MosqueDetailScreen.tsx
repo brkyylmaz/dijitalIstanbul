@@ -17,7 +17,7 @@ import AudioPlayer from '../components/AudioPlayer';
 import { useIsFocused } from '@react-navigation/native';
 import { SERV_ADDRESS } from '../store+client/consts';
 import { PageFullInfo } from '../types/fullPage';
-import { t } from '../modules/i18n';
+import { t, isRtl } from '../modules/i18n';
 import { addToFavorites, favoritesStore, removeFromFavorites } from '../store+client/favorites';
 import { useSnapshot } from 'valtio';
 
@@ -57,6 +57,7 @@ function MosqueDetailScreen({ route, navigation }: Props) {
   const [pageData, setPageData] = useState<PageFullInfo | null>(null);
   const f = useIsFocused();
   const favSnap = useSnapshot(favoritesStore);
+  const rtl = isRtl();
 
   useEffect(()=>{
     if (!f){return}
@@ -119,7 +120,7 @@ function MosqueDetailScreen({ route, navigation }: Props) {
       <View style={[styles.imageContainer, { height: Math.max(460, width * 0.6) }]}>
         <Image resizeMode="cover" source={{ uri: pageData?.thumbnail_url }} style={styles.coverImageNew} />
         <View style={styles.titleOverlay}>
-          <Text style={styles.titleNew}>{pageData?.title}</Text>
+          <Text style={[styles.titleNew, rtl && styles.titleNewRtl]}>{pageData?.title}</Text>
         </View>
       </View>
 
@@ -136,25 +137,25 @@ function MosqueDetailScreen({ route, navigation }: Props) {
         {selectedOption === 'info' ? (
           <View style={styles.infoContainer}>
             {/* Üst satır: Yapım ve Konum yan yana */}
-            <View style={styles.infoRow}>
+            <View style={[styles.infoRow, rtl && styles.infoRowRtl]}>
               <View style={styles.infoCard}>
-                <Text style={styles.infoCardLabel}>{pageData?.page_type == "mosque" ? t('detail.mosque.built_year') : t('detail.mausoleum.person_in_tomb')}</Text>
-                <Text style={styles.infoCardValue}>{pageData?.page_type == "mosque" ? pageData.built_at : pageData?.contains[0].name}</Text>
+                <Text style={[styles.infoCardLabel, rtl && styles.infoTextRtl]}>{pageData?.page_type == "mosque" ? t('detail.mosque.built_year') : t('detail.mausoleum.person_in_tomb')}</Text>
+                <Text style={[styles.infoCardValue, rtl && styles.infoTextRtl]}>{pageData?.page_type == "mosque" ? pageData.built_at : pageData?.contains[0].name}</Text>
               </View>
               <View style={styles.infoCard}>
-                <Text style={styles.infoCardLabel}>{t('detail.mosque.location')}</Text>
-                <Text style={styles.infoCardValue}>{pageData?.location_str}</Text>
+                <Text style={[styles.infoCardLabel, rtl && styles.infoTextRtl]}>{t('detail.mosque.location')}</Text>
+                <Text style={[styles.infoCardValue, rtl && styles.infoTextRtl]}>{pageData?.location_str}</Text>
               </View>
             </View>
             
             {/* Alt satırlar: Kim Yaptırdı ve Mimarı tek tek */}
             <View style={styles.infoCardFull}>
-              <Text style={styles.infoCardLabel}>{pageData?.page_type == "mosque" ? t('detail.mosque.built_by') : t('detail.mausoleum.title')}</Text>
-              <Text style={styles.infoCardValue}>{pageData?.page_type == "mosque" ? pageData.built_by : pageData?.contains[0].title}</Text>
+              <Text style={[styles.infoCardLabel, rtl && styles.infoTextRtl]}>{pageData?.page_type == "mosque" ? t('detail.mosque.built_by') : t('detail.mausoleum.title')}</Text>
+              <Text style={[styles.infoCardValue, rtl && styles.infoTextRtl]}>{pageData?.page_type == "mosque" ? pageData.built_by : pageData?.contains[0].title}</Text>
             </View>
             <View style={styles.infoCardFull}>
-              <Text style={styles.infoCardLabel}>{pageData?.page_type == "mosque" ? t('detail.mosque.architect') : t('detail.mausoleum.birth_death')}</Text>
-              <Text style={styles.infoCardValue}>{pageData?.page_type == "mosque" ? pageData.architect : pageData?.contains[0].life_years}</Text>
+              <Text style={[styles.infoCardLabel, rtl && styles.infoTextRtl]}>{pageData?.page_type == "mosque" ? t('detail.mosque.architect') : t('detail.mausoleum.birth_death')}</Text>
+              <Text style={[styles.infoCardValue, rtl && styles.infoTextRtl]}>{pageData?.page_type == "mosque" ? pageData.architect : pageData?.contains[0].life_years}</Text>
             </View>
             
             {/* Ek Bilgiler - Dummy data'dan geliyor */}
@@ -189,7 +190,7 @@ function MosqueDetailScreen({ route, navigation }: Props) {
           <AudioPlayer 
             audioUrl={`https://dijitalistanbul.org/dijitalistanbulaudio/${postID}.mp3`}
             title={pageData?.title}
-            subtitle={t('app.subtitle')}
+            imageUrl={pageData?.thumbnail_url}
           />
         ) : selectedOption === 'location' ? (
           <View style={styles.infoBlock}>
@@ -255,6 +256,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 12,
   },
+  infoRowRtl: {
+    flexDirection: 'row-reverse',
+  },
   infoCard: {
     flex: 1,
     backgroundColor: 'transparent',
@@ -281,6 +285,9 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#1F2933',
     lineHeight: 22,
+  },
+  infoTextRtl: {
+    textAlign: 'right',
   },
   divider: {
     height: 1,
@@ -369,6 +376,9 @@ const styles = StyleSheet.create({
     textShadowOffset: { width: 0, height: 2 },
     textShadowRadius: 4,
     lineHeight: 40,
+  },
+  titleNewRtl: {
+    textAlign: 'right',
   },
   content: {
     paddingHorizontal: 24,
