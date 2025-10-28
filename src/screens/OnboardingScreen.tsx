@@ -10,6 +10,7 @@ import {
   ViewToken,
 } from 'react-native';
 import { t, isRtl } from '../modules/i18n';
+import { set_key } from '../modules/fs';
 
 const { width, height } = Dimensions.get('window');
 
@@ -20,11 +21,7 @@ interface OnboardingSlide {
   description: string;
 }
 
-interface OnboardingScreenProps {
-  onComplete: () => void;
-}
-
-const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onComplete }) => {
+const OnboardingScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const flatListRef = useRef<FlatList>(null);
 
@@ -56,7 +53,8 @@ const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onComplete }) => {
         animated: true,
       });
     } else {
-      onComplete();
+      set_key("onboarding_done", true);
+      navigation.replace('MainTabs');
     }
   };
 

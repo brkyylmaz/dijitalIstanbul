@@ -4,11 +4,13 @@ import { SERV_ADDRESS } from "./consts";
 import { PageListItem } from "../types/listElem"
 import { AppAttributes } from "../types/appAttributes";
 import { readFavorites } from "./favorites";
+import { get_key } from "../modules/fs";
 
 const store = proxy({
     isLoading: true,
     pageList: [] as PageListItem[],
-    appAttributes: {} as AppAttributes
+    appAttributes: {} as AppAttributes,
+    firstRun: false
 });
 
 const appInit = ()=>{
@@ -22,8 +24,20 @@ const appInit = ()=>{
         store.appAttributes = attributes;
     }
 
+    const getFirstRun = async ()=>{
+        const onboardingDone = await get_key("onboarding_done").catch(() => false);
+        console.log("onboardingDone", onboardingDone);
+        store.firstRun = !onboardingDone;
+            
+    }
+
     const runInit = async ()=>{
-        await Promise.all([getPageList(), getAppAttributes(), readFavorites()]);
+        await Promise.all([
+            getPageList(), 
+            getAppAttributes(), 
+            readFavorites(), 
+            getFirstRun()
+        ]);
         store.isLoading = false;
     }
 

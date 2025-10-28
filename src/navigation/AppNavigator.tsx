@@ -19,6 +19,7 @@ import MultipleTombDetailScreen from '../screens/MultipleTombDetail';
 import QRScannerScreen from '../screens/QRScannerScreen';
 import OnboardingScreen from '../screens/OnboardingScreen';
 import i18n, { lang_list, t } from '../modules/i18n';
+import { store } from '../store+client/store';
 
 export type RootStackParamList = {
   Onboarding: undefined;
@@ -131,18 +132,13 @@ function AppNavigator() {
 
   return (
     <NavigationContainer>
-      <Stack.Navigator initialRouteName="Onboarding">
-        <Stack.Screen
+      <Stack.Navigator initialRouteName={store.firstRun ? "Onboarding" : "MainTabs"}>
+        {store.firstRun && <Stack.Screen
           name="Onboarding"
           options={{ headerShown: false }}
+          component={OnboardingScreen}
         >
-          {(props) => (
-            <OnboardingScreen
-              {...props}
-              onComplete={() => props.navigation.replace('MainTabs')}
-            />
-          )}
-        </Stack.Screen>
+        </Stack.Screen>}
         <Stack.Screen
           component={MainTabs}
           name="MainTabs"

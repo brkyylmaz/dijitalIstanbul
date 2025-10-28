@@ -202,7 +202,6 @@ export const HeaderRight: React.FC<HeaderComponentProps> = ({
         style={[
           headerStyles.iconButton, 
           headerStyles.languageButton,
-          i18n.language == "en" && {paddingLeft: 8},
           i18n.language == "tr" && {paddingLeft: 12},
         ]}
         accessibilityLabel={accessibilityLabels?.languageSelection}

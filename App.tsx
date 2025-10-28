@@ -35,8 +35,6 @@ function AppContent() {
   return <AppNavigator />;
 }
 
-console.log('AppContent sanıty');
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
