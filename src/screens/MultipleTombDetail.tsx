@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useLayoutEffect, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Image,
@@ -60,25 +60,42 @@ function MultipleTombDetailScreen({ navigation, route }: Props) {
   const f = useIsFocused();
   const favSnap = useSnapshot(favoritesStore);
   const rtl = isRtl();
+  const isFavorite = favSnap.favorites.includes(postID);
 
-  const toggleFavorite = ()=>{
-    if (favSnap.favorites.includes(postID)){
+  const toggleFavorite = useCallback(() => {
+    if (isFavorite) {
       removeFromFavorites(postID);
     } else {
       addToFavorites(postID);
     }
-  }
+  }, [isFavorite, postID]);
+
+  const filteredContains = useMemo(() => {
+    const hasText = (value?: string | null) => !!value && value.trim().length > 0;
+
+    return (pageData?.contains ?? []).filter((person) => {
+      const aboutHasContent = Array.isArray(person.about) && person.about.some((entry) => hasText(entry));
+
+      return (
+        hasText(person.name) && (
+          hasText(person.title) ||
+          hasText(person.life_years) ||
+          aboutHasContent
+        )
+      );
+    });
+  }, [pageData]);
 
   useLayoutEffect(() => {
     navigation.setOptions({
       headerRight: () => (
         <FavoriteHeader 
-          isFavorite={favSnap.favorites.includes(postID)} 
+          isFavorite={isFavorite} 
           onToggle={toggleFavorite} 
         />
       ),
     });
-  }, [navigation, favSnap.favorites.includes(postID), toggleFavorite]);
+  }, [navigation, isFavorite, toggleFavorite]);
 
   useEffect(()=>{
     if (!f){return}
@@ -94,7 +111,7 @@ function MultipleTombDetailScreen({ navigation, route }: Props) {
     })()
 
 
-  }, [f]);
+  }, [f, postID]);
 
   if (isLoading) {
     return (
@@ -141,7 +158,7 @@ function MultipleTombDetailScreen({ navigation, route }: Props) {
             <View style={styles.sectionContainer}>
               <Text style={[styles.sectionTitle, rtl && styles.sectionTitleRtl]}>{t('detail.people_in_tomb')}</Text>
               
-              {pageData?.contains?.map((person, index) => (
+              {filteredContains.map((person, index) => (
                 <AccordionItem key={index} title={person.name} isInitiallyOpen={false}>
                   <KeyValueItem 
                     label={t('detail.person_life_years')}
